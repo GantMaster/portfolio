@@ -42,23 +42,94 @@ mediaFiles.forEach(mediaFile => {
         const video = document.createElement('video');
         video.src = mediaFile;
         video.controls = false;
-        video.muted = false;
+        video.muted = true; // Muted для автозагрузки на мобильных
         video.loop = true;
         video.playsInline = true;
+        video.preload = 'metadata'; // Загружаем метаданные и первый кадр
         video.controlsList = 'nodownload nofullscreen noremoteplayback';
         video.disablePictureInPicture = true;
         video.setAttribute('oncontextmenu', 'return false;');
         video.setAttribute('ondragstart', 'return false;');
         
+        // Создаем превью из первого кадра
+        const thumbnail = document.createElement('img');
+        thumbnail.className = 'video-thumbnail';
+        thumbnail.style.cssText = 'width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1;';
+        thumbnail.setAttribute('oncontextmenu', 'return false;');
+        thumbnail.setAttribute('ondragstart', 'return false;');
+        thumbnail.draggable = false;
+        
+        // Создаем превью при загрузке метаданных
+        video.addEventListener('loadedmetadata', function() {
+            if (video.videoWidth > 0 && video.videoHeight > 0) {
+                video.currentTime = 0.1;
+            }
+        }, { once: true });
+        
+        video.addEventListener('seeked', function() {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth || 1080;
+                canvas.height = video.videoHeight || 1920;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                thumbnail.src = canvas.toDataURL('image/jpeg', 0.8);
+            } catch (e) {
+                console.log('Не удалось создать превью:', e);
+                // Если не удалось создать превью, просто скрываем его
+                thumbnail.style.display = 'none';
+            }
+        }, { once: true });
+        
+        // Fallback: если видео загрузилось, но превью не создалось
+        video.addEventListener('loadeddata', function() {
+            if (!thumbnail.src && video.readyState >= 2) {
+                // Пытаемся создать превью еще раз
+                setTimeout(() => {
+                    if (video.videoWidth > 0) {
+                        video.currentTime = 0.1;
+                    }
+                }, 100);
+            }
+        }, { once: true });
+        
+        // Показываем превью, скрываем при воспроизведении
+        video.style.position = 'absolute';
+        video.style.top = '0';
+        video.style.left = '0';
+        video.style.zIndex = '2';
+        
         // Клик для воспроизведения/паузы
-        video.addEventListener('click', function() {
+        const playPause = function() {
             if (video.paused) {
-                video.play();
+                video.play().then(() => {
+                    thumbnail.style.opacity = '0';
+                    video.muted = false; // Включаем звук при воспроизведении
+                }).catch(() => {
+                    // Если автоплей заблокирован, просто показываем превью
+                });
             } else {
                 video.pause();
+                thumbnail.style.opacity = '1';
             }
+        };
+        
+        video.addEventListener('click', playPause);
+        thumbnail.addEventListener('click', playPause);
+        
+        // Скрываем превью когда видео играет
+        video.addEventListener('play', function() {
+            thumbnail.style.opacity = '0';
+            thumbnail.style.pointerEvents = 'none';
         });
         
+        video.addEventListener('pause', function() {
+            thumbnail.style.opacity = '1';
+            thumbnail.style.pointerEvents = 'auto';
+        });
+        
+        mediaItem.appendChild(thumbnail);
         mediaItem.appendChild(video);
     } else if (isImageFile(mediaFile)) {
         // Создаем изображение

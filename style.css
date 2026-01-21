@@ -99,8 +99,20 @@ h1 .telegram-link:hover {
     -o-user-drag: none;
 }
 
+.video-item video {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
 .video-item img {
     pointer-events: none;
+}
+
+.video-item .video-thumbnail {
+    transition: opacity 0.3s ease;
+    pointer-events: auto;
+    cursor: pointer;
 }
 
 .video-item:hover video,
