@@ -45,20 +45,27 @@ mediaFiles.forEach(mediaFile => {
         video.muted = true; // Muted для автозагрузки на мобильных
         video.loop = true;
         video.playsInline = true;
-        video.preload = 'auto'; // Загружаем видео полностью для показа первого кадра
+        video.preload = 'metadata'; // Быстрее загружаем только метаданные
         video.controlsList = 'nodownload nofullscreen noremoteplayback';
         video.disablePictureInPicture = true;
         video.setAttribute('oncontextmenu', 'return false;');
         video.setAttribute('ondragstart', 'return false;');
         
+        // Показываем видео сразу с низкой непрозрачностью
+        video.style.position = 'absolute';
+        video.style.top = '0';
+        video.style.left = '0';
+        video.style.zIndex = '1';
+        video.style.opacity = '0.3'; // Показываем видео сразу, но полупрозрачно
+        
         // Создаем элемент превью (будет показываться поверх видео)
         const thumbnail = document.createElement('div');
         thumbnail.className = 'video-thumbnail';
-        thumbnail.style.cssText = 'width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 2; background: #000; display: flex; align-items: center; justify-content: center;';
+        thumbnail.style.cssText = 'width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 2; background: transparent; display: flex; align-items: center; justify-content: center;';
         
         // Создаем превью изображение внутри
         const thumbnailImg = document.createElement('img');
-        thumbnailImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; display: block;';
+        thumbnailImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.3s ease;';
         thumbnailImg.setAttribute('oncontextmenu', 'return false;');
         thumbnailImg.setAttribute('ondragstart', 'return false;');
         thumbnailImg.draggable = false;
@@ -67,75 +74,71 @@ mediaFiles.forEach(mediaFile => {
         let posterDataUrl = null;
         let hasPlayed = false;
         
-        // Функция для создания превью
+        // Функция для создания превью (быстрая версия)
         const createPoster = function() {
             if (video.videoWidth > 0 && video.videoHeight > 0) {
                 try {
                     const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
+                    // Используем меньший размер для быстрого создания
+                    const scale = 0.5; // Уменьшаем размер для скорости
+                    canvas.width = Math.floor(video.videoWidth * scale);
+                    canvas.height = Math.floor(video.videoHeight * scale);
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    posterDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                    posterDataUrl = canvas.toDataURL('image/jpeg', 0.7);
                     thumbnailImg.src = posterDataUrl;
+                    thumbnailImg.style.opacity = '1'; // Показываем превью
+                    video.style.opacity = '0'; // Скрываем видео
                     video.poster = posterDataUrl;
                 } catch (e) {
-                    // Если canvas не работает (например, в Telegram браузере)
-                    // Показываем видео с preload="auto" и используем первый кадр
-                    video.preload = 'auto';
-                    // Показываем черный экран с индикатором загрузки
-                    thumbnail.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)';
+                    // Если canvas не работает, показываем видео напрямую
+                    thumbnail.style.display = 'none';
+                    video.style.opacity = '1';
                 }
             }
         };
         
-        // Пытаемся создать превью при загрузке метаданных
+        // Быстрое создание превью при загрузке метаданных
         video.addEventListener('loadedmetadata', function() {
             if (video.videoWidth > 0 && video.videoHeight > 0) {
-                video.currentTime = 0.1;
-            } else {
-                // Если метаданные не загрузились, пробуем загрузить видео полностью
-                video.preload = 'auto';
+                // Сразу пытаемся получить первый кадр
+                video.currentTime = 0.05; // Очень маленькое значение для скорости
             }
         }, { once: true });
         
         video.addEventListener('seeked', createPoster, { once: true });
         
-        // Fallback: если не удалось создать превью
+        // Fallback: если не удалось создать превью быстро
         video.addEventListener('loadeddata', function() {
-            if (!posterDataUrl && video.readyState >= 2) {
-                setTimeout(() => {
-                    if (video.videoWidth > 0) {
-                        video.currentTime = 0.1;
-                    } else {
-                        // Если видео не загружается, показываем placeholder
-                        thumbnail.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)';
-                    }
-                }, 300);
+            if (!posterDataUrl && video.readyState >= 2 && video.videoWidth > 0) {
+                // Пытаемся еще раз создать превью
+                video.currentTime = 0.05;
+            } else if (!posterDataUrl) {
+                // Если превью не создалось, показываем видео напрямую
+                thumbnail.style.display = 'none';
+                video.style.opacity = '1';
             }
         }, { once: true });
-        
-        // Показываем превью, скрываем при воспроизведении
-        video.style.position = 'absolute';
-        video.style.top = '0';
-        video.style.left = '0';
-        video.style.zIndex = '1';
         
         // Клик для воспроизведения/паузы
         const playPause = function() {
             if (video.paused) {
                 video.play().then(() => {
                     hasPlayed = true;
-                    thumbnail.style.opacity = '0';
+                    thumbnailImg.style.opacity = '0';
                     thumbnail.style.pointerEvents = 'none';
+                    video.style.opacity = '1';
                     video.muted = false; // Включаем звук при воспроизведении
                 }).catch(() => {
                     // Если автоплей заблокирован
                 });
             } else {
                 video.pause();
-                thumbnail.style.opacity = '1';
-                thumbnail.style.pointerEvents = 'auto';
+                if (posterDataUrl) {
+                    thumbnailImg.style.opacity = '1';
+                    thumbnail.style.pointerEvents = 'auto';
+                    video.style.opacity = '0';
+                }
             }
         };
         
@@ -144,57 +147,26 @@ mediaFiles.forEach(mediaFile => {
         
         // Скрываем превью когда видео играет
         video.addEventListener('play', function() {
-            thumbnail.style.opacity = '0';
+            thumbnailImg.style.opacity = '0';
             thumbnail.style.pointerEvents = 'none';
+            video.style.opacity = '1';
         });
         
         video.addEventListener('pause', function() {
-            if (hasPlayed) {
-                thumbnail.style.opacity = '1';
+            if (hasPlayed && posterDataUrl) {
+                thumbnailImg.style.opacity = '1';
                 thumbnail.style.pointerEvents = 'auto';
+                video.style.opacity = '0';
             }
         });
         
-        // Если видео загрузилось и готово к воспроизведению, но превью не создалось
-        video.addEventListener('canplay', function() {
-            if (!posterDataUrl && !hasPlayed) {
-                // Показываем видео напрямую, если превью не создалось
-                // Устанавливаем первый кадр как превью
-                try {
-                    video.currentTime = 0;
-                    setTimeout(() => {
-                        if (video.readyState >= 2) {
-                            const canvas = document.createElement('canvas');
-                            canvas.width = video.videoWidth || 1080;
-                            canvas.height = video.videoHeight || 1920;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                            thumbnailImg.src = dataUrl;
-                            posterDataUrl = dataUrl;
-                        } else {
-                            // Если не получилось, просто скрываем превью и показываем видео
-                            thumbnail.style.opacity = '0';
-                        }
-                    }, 100);
-                } catch (e) {
-                    // Если canvas не работает, просто скрываем превью
-                    thumbnail.style.opacity = '0';
-                }
+        // Если превью не создалось, показываем видео через небольшую задержку
+        setTimeout(() => {
+            if (!posterDataUrl && video.readyState >= 1) {
+                thumbnail.style.display = 'none';
+                video.style.opacity = '1';
             }
-        });
-        
-        // Дополнительная проверка - если видео загрузилось, но превью нет
-        video.addEventListener('loadeddata', function() {
-            if (!posterDataUrl && video.readyState >= 2 && video.videoWidth > 0) {
-                setTimeout(() => {
-                    if (!posterDataUrl) {
-                        // Пытаемся еще раз создать превью
-                        video.currentTime = 0.1;
-                    }
-                }, 500);
-            }
-        });
+        }, 500);
         
         mediaItem.appendChild(thumbnail);
         mediaItem.appendChild(video);
