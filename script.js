@@ -43,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createMediaItems(files, isSquare = false) {
         videoGrid.innerHTML = '';
-
         videoGrid.classList.toggle('square-grid', isSquare);
 
         files.forEach(mediaFile => {
@@ -89,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     opacity:0;
                     transition:opacity .3s;
                 `;
-
                 thumbnail.appendChild(thumbImg);
 
                 let poster = null;
@@ -119,10 +117,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 video.addEventListener('seeked', createPoster, { once:true });
 
+                // ---------- PLAY/PAUSE + Z-INDEX FIX ----------
                 function togglePlay() {
                     if (video.paused) {
                         video.play().then(() => {
                             hasPlayed = true;
+                            video.style.zIndex = '3';
+                            thumbnail.style.zIndex = '2';
                             thumbImg.style.opacity = '0';
                             video.style.opacity = '1';
                             video.muted = false;
@@ -130,6 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         video.pause();
                         if (poster) {
+                            video.style.zIndex = '1';
+                            thumbnail.style.zIndex = '2';
                             thumbImg.style.opacity = '1';
                             video.style.opacity = '0';
                         }
@@ -138,6 +141,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 video.addEventListener('click', togglePlay);
                 thumbnail.addEventListener('click', togglePlay);
+
+                video.addEventListener('play', () => {
+                    video.style.zIndex = '3';
+                    thumbnail.style.zIndex = '2';
+                    thumbImg.style.opacity = '0';
+                    video.style.opacity = '1';
+                });
+
+                video.addEventListener('pause', () => {
+                    if (hasPlayed && poster) {
+                        video.style.zIndex = '1';
+                        thumbnail.style.zIndex = '2';
+                        thumbImg.style.opacity = '1';
+                        video.style.opacity = '0';
+                    }
+                });
 
                 mediaItem.append(thumbnail, video);
             }
@@ -166,12 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.tab-button').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.tab-button')
-                .forEach(b => b.classList.remove('active'));
-
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentTab = btn.dataset.tab;
-
             if (currentTab === 'motion') createMediaItems(motionFiles,false);
             if (currentTab === 'modeling') createMediaItems(modelingFiles,true);
         });
@@ -198,8 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('imageModalClose')?.addEventListener('click', closeImageModal);
-    imageModal?.querySelector('.image-modal-backdrop')
-        ?.addEventListener('click', closeImageModal);
+    imageModal?.querySelector('.image-modal-backdrop')?.addEventListener('click', closeImageModal);
 
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && imageModal.classList.contains('active')) {
