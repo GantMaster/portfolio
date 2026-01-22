@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 video.addEventListener('seeked', createPoster, { once:true });
 
-                // ---------- PLAY/PAUSE + Z-INDEX FIX ----------
+                // ---------- PLAY/PAUSE + Z-INDEX + FINAL FIX ----------
                 function togglePlay() {
                     if (video.paused) {
                         video.play().then(() => {
@@ -130,7 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     } else {
                         video.pause();
-                        if (poster) {
+                        // превью показываем только если видео ещё не воспроизведено
+                        if (!hasPlayed) {
                             video.style.zIndex = '1';
                             thumbnail.style.zIndex = '2';
                             thumbImg.style.opacity = '1';
@@ -150,12 +151,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 video.addEventListener('pause', () => {
-                    if (hasPlayed && poster) {
+                    if (!hasPlayed) {
                         video.style.zIndex = '1';
                         thumbnail.style.zIndex = '2';
                         thumbImg.style.opacity = '1';
                         video.style.opacity = '0';
                     }
+                    // если hasPlayed = true, оставляем последний кадр и не показываем превью
                 });
 
                 mediaItem.append(thumbnail, video);
