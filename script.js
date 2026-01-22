@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     const modelingFiles = [
-        '1.jpg','2.jpg','7.jpg','8.jpg','9.jpg','11.jpg',
-        '6.jpg','5.jpg','5.png','14.mp4','10.jpg','3.jpg',
+        '1(1).jpg','2(1).jpg','7.jpg','8.jpg','9.jpg','11.jpg',
+        '6.jpg','5.jpg','5(1).jpg','14.mp4','10.jpg','3(1).jpg',
     ];
 
     const videoGrid = document.getElementById('videoGrid');
