@@ -45,6 +45,31 @@ document.addEventListener('DOMContentLoaded', () => {
         videoGrid.innerHTML = '';
         videoGrid.classList.toggle('square-grid', isSquare);
 
+        // Показываем loader
+        const loader = document.getElementById('loader');
+        if (loader) {
+            loader.classList.remove('hidden');
+        }
+
+        let loadedCount = 0;
+        const totalFiles = files.length;
+
+        // Если файлов нет, сразу скрываем loader
+        if (totalFiles === 0 && loader) {
+            loader.classList.add('hidden');
+            return;
+        }
+
+        function checkAllLoaded() {
+            loadedCount++;
+            if (loadedCount >= totalFiles && loader) {
+                // Небольшая задержка для плавности
+                setTimeout(() => {
+                    loader.classList.add('hidden');
+                }, 300);
+            }
+        }
+
         files.forEach(mediaFile => {
             const mediaItem = document.createElement('div');
             mediaItem.className = 'video-item';
@@ -117,6 +142,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 video.addEventListener('seeked', createPoster, { once:true });
 
+                // Отслеживаем загрузку видео
+                video.addEventListener('loadeddata', checkAllLoaded, { once: true });
+                video.addEventListener('error', checkAllLoaded, { once: true });
+
                 // ---------- PLAY/PAUSE + Z-INDEX + FINAL FIX ----------
                 function togglePlay() {
                     if (video.paused) {
@@ -172,6 +201,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 img.style.cssText = isSquare
                     ? 'height:100%;width:auto;object-fit:contain;'
                     : 'width:100%;height:100%;object-fit:cover;';
+
+                // Отслеживаем загрузку изображения
+                img.addEventListener('load', checkAllLoaded, { once: true });
+                img.addEventListener('error', checkAllLoaded, { once: true });
 
                 img.addEventListener('click', () => openImageModal(mediaFile));
                 mediaItem.appendChild(img);
