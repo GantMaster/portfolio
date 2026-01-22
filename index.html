@@ -13,10 +13,24 @@
             <span class="author">Максима Аскерова</span>
             <a href="https://t.me/gantmaster" target="_blank" class="telegram-link">@gantmaster</a>
         </h1>
+        <div class="tabs-menu">
+            <button class="tab-button active" data-tab="motion">Моушндизайн & Креативы</button>
+            <button class="tab-button" data-tab="modeling">Моделирование</button>
+        </div>
         <div class="video-grid" id="videoGrid">
             <!-- Видео будут добавлены автоматически через JS -->
         </div>
     </div>
+    
+    <!-- Модальное окно для полноэкранного просмотра изображений -->
+    <div class="image-modal" id="imageModal">
+        <div class="image-modal-backdrop"></div>
+        <div class="image-modal-content">
+            <button class="image-modal-close" id="imageModalClose">&times;</button>
+            <img class="image-modal-img" id="imageModalImg" src="" alt="">
+        </div>
+    </div>
+    
     <script src="script.js"></script>
 </body>
 </html>

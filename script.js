@@ -1,5 +1,5 @@
-// Список медиа файлов (видео и изображения)
-const mediaFiles = [
+// Список медиа файлов для первой вкладки (Моушндизайн & Креативы)
+const motionFiles = [
     '5.mp4',
     '8.mp4',
     '7.mp4',
@@ -16,10 +16,29 @@ const mediaFiles = [
     '12.mp4',
     '13.mp4',
     '11.mp4',
+];
+
+// Список медиа файлов для второй вкладки (Моделирование)
+// Добавьте свои файлы для моделирования сюда
+const modelingFiles = [
+    '1.jpg',
+    '2.jpg',
+    '7.jpg',
+    '8.jpg',
+    '9.jpg',
+    '11.jpg',
+    '6.jpg',
+    '5.jpg',
+    '5.png',
+    '14.mp4',
+    '10.jpg',
+    '3.jpg',
     
+
 ];
 
 const videoGrid = document.getElementById('videoGrid');
+let currentTab = 'motion';
 
 // Проверяем тип файла
 function isVideoFile(filename) {
@@ -32,8 +51,19 @@ function isImageFile(filename) {
     return imageExtensions.some(ext => filename.toLowerCase().endsWith(ext));
 }
 
-// Создаем элементы медиа
-mediaFiles.forEach(mediaFile => {
+// Функция для создания медиа элементов
+function createMediaItems(files, isSquare = false) {
+    // Очищаем сетку
+    videoGrid.innerHTML = '';
+    
+    // Меняем класс сетки в зависимости от типа
+    if (isSquare) {
+        videoGrid.classList.add('square-grid');
+    } else {
+        videoGrid.classList.remove('square-grid');
+    }
+    
+    files.forEach(mediaFile => {
     const mediaItem = document.createElement('div');
     mediaItem.className = 'video-item';
     
@@ -51,17 +81,17 @@ mediaFiles.forEach(mediaFile => {
         video.setAttribute('oncontextmenu', 'return false;');
         video.setAttribute('ondragstart', 'return false;');
         
-        // Показываем видео сразу с низкой непрозрачностью
+        // Показываем видео сразу с большей непрозрачностью
         video.style.position = 'absolute';
         video.style.top = '0';
         video.style.left = '0';
         video.style.zIndex = '1';
-        video.style.opacity = '0.3'; // Показываем видео сразу, но полупрозрачно
+        video.style.opacity = '0.7'; // Показываем видео сразу, более видимо
         
         // Создаем элемент превью (будет показываться поверх видео)
         const thumbnail = document.createElement('div');
         thumbnail.className = 'video-thumbnail';
-        thumbnail.style.cssText = 'width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 2; background: transparent; display: flex; align-items: center; justify-content: center;';
+        thumbnail.style.cssText = 'width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 2; background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%); display: flex; align-items: center; justify-content: center;';
         
         // Создаем превью изображение внутри
         const thumbnailImg = document.createElement('img');
@@ -175,16 +205,100 @@ mediaFiles.forEach(mediaFile => {
         const img = document.createElement('img');
         img.src = mediaFile;
         img.alt = mediaFile;
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'cover';
+        
+        // Для квадратной сетки - растягиваем по высоте с пустотами по бокам
+        if (isSquare) {
+            img.style.width = 'auto';
+            img.style.height = '100%';
+            img.style.maxWidth = '100%';
+            img.style.objectFit = 'contain';
+        } else {
+            // Для вертикальной сетки - как обычно
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+        }
+        
+        img.style.cursor = 'pointer';
         img.setAttribute('oncontextmenu', 'return false;');
         img.setAttribute('ondragstart', 'return false;');
         img.draggable = false;
+        
+        // Обработчик клика для открытия в полноэкранном режиме
+        img.addEventListener('click', function() {
+            openImageModal(mediaFile);
+        });
+        
         mediaItem.appendChild(img);
     }
     
     videoGrid.appendChild(mediaItem);
+    });
+}
+
+// Переключение вкладок
+const tabButtons = document.querySelectorAll('.tab-button');
+tabButtons.forEach(button => {
+    button.addEventListener('click', function() {
+        const tab = this.getAttribute('data-tab');
+        
+        // Убираем активный класс у всех кнопок
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        // Добавляем активный класс текущей кнопке
+        this.classList.add('active');
+        
+        // Сохраняем текущую вкладку
+        currentTab = tab;
+        
+        // Загружаем соответствующие файлы
+        if (tab === 'motion') {
+            createMediaItems(motionFiles, false);
+        } else if (tab === 'modeling') {
+            createMediaItems(modelingFiles, true);
+        }
+    });
+});
+
+// Загружаем первую вкладку по умолчанию
+createMediaItems(motionFiles, false);
+
+// Функции для модального окна изображений
+function openImageModal(imageSrc) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('imageModalImg');
+    modalImg.src = imageSrc;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Блокируем прокрутку фона
+}
+
+function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = ''; // Восстанавливаем прокрутку
+}
+
+// Обработчики для модального окна
+const imageModal = document.getElementById('imageModal');
+const imageModalClose = document.getElementById('imageModalClose');
+const imageModalBackdrop = imageModal.querySelector('.image-modal-backdrop');
+
+// Закрытие по клику на крестик
+imageModalClose.addEventListener('click', closeImageModal);
+
+// Закрытие по клику на фон
+imageModalBackdrop.addEventListener('click', closeImageModal);
+
+// Закрытие по клику на само изображение
+const imageModalImg = document.getElementById('imageModalImg');
+imageModalImg.addEventListener('click', function(e) {
+    e.stopPropagation(); // Предотвращаем закрытие при клике на изображение
+});
+
+// Закрытие по клавише Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && imageModal.classList.contains('active')) {
+        closeImageModal();
+    }
 });
 
 // Блокировка правой кнопки мыши и других способов скачивания
