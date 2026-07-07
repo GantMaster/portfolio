@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'modeling/tykva2.jpg',
         'modeling/lampa.jpg',
         'modeling/avatar.jpg',
-        'modeling/robot.jpg',
+        'modeling/Robot.jpg',
         'modeling/maska.mp4',
         'modeling/koza.jpg',
         'modeling/twitch.jpg',
