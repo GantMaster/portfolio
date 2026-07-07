@@ -74,6 +74,8 @@ h1 .telegram-link:hover {
     font-family: Arial, sans-serif;
     user-select: none;
     -webkit-user-select: none;
+    text-decoration: none;
+    display: inline-block;
 }
 
 .tab-button:hover {
@@ -178,6 +180,50 @@ h1 .telegram-link:hover {
     height: 100%;
     object-fit: cover;
     display: block;
+}
+
+.video-play-icon {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.video-play-icon.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.video-play-icon-shape {
+    width: 64px;
+    height: 64px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.video-play-icon-shape::after {
+    content: '';
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 12px 0 12px 20px;
+    border-color: transparent transparent transparent #fff;
+    margin-left: 4px;
+}
+
+.video-item:hover .video-play-icon-shape {
+    transform: scale(1.08);
+    background: rgba(0, 136, 204, 0.65);
 }
 
 /* Индикатор загрузки */

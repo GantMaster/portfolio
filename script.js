@@ -14,12 +14,25 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     const modelingFiles = [
-        '1(1).jpg','2(1).jpg','7.jpg','8.jpg','9.jpg','11.jpg',
-        '6.jpg','5.jpg','5(1).jpg','14.mp4','10.jpg','3(1).jpg',
+        'modeling/chest.jpg',
+        'modeling/cherep.jpg',
+        'modeling/budka.jpg',
+        'modeling/zhuk.jpg',
+        'modeling/starik.jpg',
+        'modeling/tykva2.jpg',
+        'modeling/lampa.jpg',
+        'modeling/avatar.jpg',
+        'modeling/robot.jpg',
+        'modeling/maska.mp4',
+        'modeling/koza.jpg',
+        'modeling/twitch.jpg',
+        'modeling/zhabka.jpg',
+        'modeling/malchik.jpg',
     ];
 
     const videoGrid = document.getElementById('videoGrid');
     let currentTab = 'motion';
+    let activeVideo = null;
 
     if (!videoGrid) {
         console.error('videoGrid not found');
@@ -40,6 +53,21 @@ document.addEventListener('DOMContentLoaded', () => {
             .some(ext => filename.toLowerCase().endsWith(ext));
     }
 
+    function hasPlayIcon(filename) {
+        return ['.mp4', '.webm', '.mov']
+            .some(ext => filename.toLowerCase().endsWith(ext));
+    }
+
+    function pauseOtherVideos(currentVideo) {
+        videoGrid.querySelectorAll('video').forEach(v => {
+            if (v !== currentVideo && !v.paused) v.pause();
+        });
+    }
+
+    function setPlayIconVisible(playIcon, visible) {
+        if (playIcon) playIcon.classList.toggle('hidden', !visible);
+    }
+
     // =========================
     // MEDIA CREATION
     // =========================
@@ -47,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function createMediaItems(files, isSquare = false) {
         videoGrid.innerHTML = '';
         videoGrid.classList.toggle('square-grid', isSquare);
+        activeVideo = null;
 
         files.forEach(mediaFile => {
             const mediaItem = document.createElement('div');
@@ -101,6 +130,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 thumbnail.appendChild(thumbImg);
 
+                const playIcon = hasPlayIcon(mediaFile) ? document.createElement('div') : null;
+                if (playIcon) {
+                    playIcon.className = 'video-play-icon';
+                    playIcon.setAttribute('aria-hidden', 'true');
+                    const playShape = document.createElement('span');
+                    playShape.className = 'video-play-icon-shape';
+                    playIcon.appendChild(playShape);
+                }
+
                 let poster = null;
                 let hasPlayed = false;
 
@@ -138,16 +176,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 // ---------- PLAY/PAUSE + Z-INDEX + FINAL FIX ----------
                 function togglePlay() {
                     if (video.paused) {
+                        pauseOtherVideos(video);
                         video.play().then(() => {
                             hasPlayed = true;
+                            activeVideo = video;
                             video.style.zIndex = '3';
                             thumbnail.style.zIndex = '2';
                             thumbImg.style.opacity = '0';
                             video.style.opacity = '1';
                             video.muted = false;
+                            setPlayIconVisible(playIcon, false);
                         });
                     } else {
                         video.pause();
+                        if (activeVideo === video) activeVideo = null;
+                        setPlayIconVisible(playIcon, true);
                         // превью показываем только если видео ещё не воспроизведено
                         if (!hasPlayed) {
                             video.style.zIndex = '1';
@@ -162,13 +205,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 thumbnail.addEventListener('click', togglePlay);
 
                 video.addEventListener('play', () => {
+                    pauseOtherVideos(video);
+                    activeVideo = video;
                     video.style.zIndex = '3';
                     thumbnail.style.zIndex = '2';
                     thumbImg.style.opacity = '0';
                     video.style.opacity = '1';
+                    setPlayIconVisible(playIcon, false);
                 });
 
                 video.addEventListener('pause', () => {
+                    if (activeVideo === video) activeVideo = null;
+                    setPlayIconVisible(playIcon, true);
                     if (!hasPlayed) {
                         video.style.zIndex = '1';
                         thumbnail.style.zIndex = '2';
@@ -179,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 mediaItem.append(thumbnail, video);
+                if (playIcon) mediaItem.appendChild(playIcon);
             }
 
             // ---------- IMAGE ----------
@@ -213,17 +262,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // TABS
     // =========================
 
+    const VALID_TABS = ['motion', 'modeling'];
+
+    function getTabFromHash() {
+        const hash = location.hash.slice(1);
+        return VALID_TABS.includes(hash) ? hash : 'motion';
+    }
+
+    function switchTab(tab) {
+        if (!VALID_TABS.includes(tab)) tab = 'motion';
+        currentTab = tab;
+
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tab);
+        });
+
+        if (tab === 'motion') createMediaItems(motionFiles, false);
+        if (tab === 'modeling') createMediaItems(modelingFiles, true);
+    }
+
     document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentTab = btn.dataset.tab;
-            if (currentTab === 'motion') createMediaItems(motionFiles,false);
-            if (currentTab === 'modeling') createMediaItems(modelingFiles,true);
+        btn.addEventListener('click', e => {
+            e.preventDefault();
+            const tab = btn.dataset.tab;
+            if (location.hash !== `#${tab}`) {
+                location.hash = tab;
+            } else {
+                switchTab(tab);
+            }
         });
     });
 
-    createMediaItems(motionFiles,false);
+    window.addEventListener('hashchange', () => switchTab(getTabFromHash()));
+
+    switchTab(getTabFromHash());
 
     // =========================
     // MODAL
