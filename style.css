@@ -774,3 +774,41 @@ body {
         max-height: 95%;
     }
 }
+
+/* ============ ПАСХАЛКА ============ */
+
+.danger-btn {
+    position: fixed;
+    left: 14px;
+    bottom: 14px;
+    z-index: 50;
+    background: #b91c1c;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border: 1px dashed rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    transform: rotate(-4deg);
+    opacity: 0.55;
+    transition: transform 0.25s ease, opacity 0.25s ease, background 0.25s ease;
+}
+
+.danger-btn:hover {
+    transform: rotate(0deg) scale(1.08);
+    opacity: 1;
+    background: #dc2626;
+}
+
+@media (max-width: 640px) {
+    .danger-btn {
+        left: 10px;
+        bottom: 10px;
+        font-size: 9px;
+        padding: 5px 8px;
+    }
+}
