@@ -34,6 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTab = 'motion';
     let activeVideo = null;
 
+    const yearEl = document.getElementById('year');
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
+
     if (!videoGrid) {
         console.error('videoGrid not found');
         return;
