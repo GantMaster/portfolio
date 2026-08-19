@@ -431,8 +431,89 @@ b { color: #000080; }
     .main-table { width: 100% !important; }
 }
 
+@media (max-width: 1024px) {
+    .video-grid { grid-template-columns: repeat(2, 1fr); }
+    .video-grid.square-grid { column-count: 2; }
+}
+
 @media (max-width: 640px) {
-    .video-grid,
-    .video-grid.square-grid { grid-template-columns: 1fr; column-count: 1; }
+    body { font-size: 13px; }
+
+    .top-marquee { font-size: 12px; }
+
+    .constr-banner { font-size: 10px; padding: 5px 4px; }
+
+    /* таблица-шапка со скином и ником — стопкой, по центру */
+    .header-table, .header-table tbody, .header-table tr {
+        display: block;
+        width: 100% !important;
+        text-align: center;
+    }
+
+    .header-table td {
+        display: block;
+        width: 100% !important;
+    }
+
+    .avatar-cell { padding-bottom: 4px !important; }
+
     .site-title { font-size: 22px; }
+    .site-subtitle { font-size: 10px; }
+
+    .badges-row { text-align: center; }
+
+    .badge {
+        margin: 2px;
+    }
+
+    /* внутренние табличные ряды с тегами компаний/навыков —
+       превращаем в перенос строк, а не в горизонтальный скролл */
+    .about-table table, .about-table table tbody, .about-table table tr {
+        display: block;
+    }
+
+    .about-table table td.tag,
+    .about-table table td.skill {
+        display: inline-block;
+        margin: 2px;
+    }
+
+    .panel { font-size: 13px; }
+
+    .tabs-menu { padding: 4px !important; }
+
+    .tab-button {
+        display: block;
+        margin: 4px auto;
+        text-align: center;
+    }
+
+    .video-grid,
+    .video-grid.square-grid {
+        grid-template-columns: 1fr;
+        column-count: 1;
+    }
+
+    .video-play-icon-shape { width: 38px; height: 38px; }
+
+    /* футер — тоже стопкой, длинные строки не должны вылезать за экран */
+    .footer-table td { padding: 8px !important; }
+
+    .webring { font-size: 10px; }
+
+    .counter-box { padding: 5px 10px; }
+
+    .counter-digits { font-size: 16px; letter-spacing: 2px; }
+
+    .small-print { font-size: 10px; }
+
+    .image-modal-img { max-height: 65vh; }
+
+    .popup-titlebar td:first-child {
+        font-size: 10px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 65vw;
+    }
 }
