@@ -167,6 +167,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     video.currentTime = 0.05;
                     // Скрываем индикатор загрузки когда метаданные загружены
                     loader.classList.add('hidden');
+                    // В режиме "водопада" (моделирование) все слои внутри видео абсолютно
+                    // спозиционированы, поэтому карточке нужно явно задать пропорции кадра
+                    if (isSquare && video.videoWidth && video.videoHeight) {
+                        mediaItem.style.aspectRatio = `${video.videoWidth} / ${video.videoHeight}`;
+                    }
                 }, { once:true });
 
                 // Обработка ошибок загрузки
@@ -240,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 img.alt = mediaFile;
 
                 img.style.cssText = isSquare
-                    ? 'height:100%;width:auto;object-fit:contain;'
+                    ? 'width:100%;height:auto;display:block;'
                     : 'width:100%;height:100%;object-fit:cover;';
 
                 // Скрываем индикатор загрузки когда изображение загружено

@@ -366,8 +366,11 @@ body {
     width: 100%;
 }
 
+/* Раздел "Моделирование" — водопад плиток (masonry), как в Pinterest */
 .video-grid.square-grid {
-    grid-template-columns: repeat(3, 1fr);
+    display: block;
+    column-count: 3;
+    column-gap: 22px;
 }
 
 .video-item {
@@ -388,18 +391,19 @@ body {
 }
 
 .square-grid .video-item {
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    aspect-ratio: auto;
+    display: block;
+    min-height: 160px;
+    margin-bottom: 22px;
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
     background: var(--surface);
 }
 
 .square-grid .video-item img {
-    object-fit: contain;
-    width: auto;
-    height: 100%;
-    max-width: 100%;
+    width: 100%;
+    height: auto;
+    display: block;
 }
 
 .video-item:hover {
@@ -585,9 +589,12 @@ body {
 }
 
 @media (max-width: 1024px) {
-    .video-grid,
-    .video-grid.square-grid {
+    .video-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .video-grid.square-grid {
+        column-count: 2;
     }
 }
 
@@ -708,9 +715,12 @@ body {
         padding-bottom: 7px;
     }
 
-    .video-grid,
-    .video-grid.square-grid {
+    .video-grid {
         grid-template-columns: 1fr;
+    }
+
+    .video-grid.square-grid {
+        column-count: 1;
     }
 
     /* На мобильном стеклянная капсула превращается в подчёркнутые вкладки —
