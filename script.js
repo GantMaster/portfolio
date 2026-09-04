@@ -1,6 +1,47 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // =========================
+    // ЯЗЫК (RU / EN)
+    // Никаких отдельных index-en.html — весь текст лежит прямо в разметке
+    // как data-ru/data-en, а переключение просто подставляет нужный вариант.
+    // Язык можно передать через ?lang=en, иначе используется сохранённый
+    // выбор (localStorage) или русский по умолчанию.
+    // =========================
+
+    const LANG_KEY = 'site_lang';
+    const urlLang = new URLSearchParams(location.search).get('lang');
+    let currentLang = (urlLang === 'en' || urlLang === 'ru')
+        ? urlLang
+        : (localStorage.getItem(LANG_KEY) || 'ru');
+
+    function applyLanguage(lang) {
+        currentLang = lang === 'en' ? 'en' : 'ru';
+        document.documentElement.lang = currentLang;
+        localStorage.setItem(LANG_KEY, currentLang);
+
+        document.querySelectorAll('[data-ru]').forEach(el => {
+            const text = currentLang === 'en' ? el.dataset.en : el.dataset.ru;
+            if (text === undefined) return;
+            if (el.hasAttribute('data-i18n-html')) el.innerHTML = text;
+            else el.textContent = text;
+        });
+
+        document.querySelectorAll('[data-ru-title]').forEach(el => {
+            el.title = currentLang === 'en' ? el.dataset.enTitle : el.dataset.ruTitle;
+        });
+
+        document.querySelectorAll('.lang-switch [data-lang]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.lang === currentLang);
+        });
+    }
+
+    document.querySelectorAll('.lang-switch [data-lang]').forEach(btn => {
+        btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
+    });
+
+    applyLanguage(currentLang);
+
+    // =========================
     // ДАННЫЕ
     // =========================
 

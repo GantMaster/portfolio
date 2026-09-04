@@ -159,6 +159,64 @@ b { color: #000080; }
 
 .badge-blink { background: #FF0000; color: #FFFF00; border-color: #ffff00; }
 
+.lang-switch {
+    display: inline-block;
+    margin-left: 4px;
+}
+
+.lang-switch button {
+    font-family: Verdana, Arial, sans-serif;
+    font-size: 10px;
+    font-weight: bold;
+    color: #000;
+    background: #C0C0C0;
+    border: 2px outset #fff;
+    padding: 2px 6px;
+    margin-right: 2px;
+    cursor: var(--pixel-cursor);
+}
+
+.lang-switch button:hover { background: #d8d8d8; }
+
+.lang-switch button.active {
+    border: 2px inset #fff;
+    background: #A0A0A0;
+    color: #FF0000;
+}
+
+/* ===== кнопка "обратно в будущее" ===== */
+.retro-back-btn {
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    z-index: 50;
+    background: #C0C0C0;
+    color: #000080 !important;
+    font-family: Verdana, Arial, sans-serif;
+    font-size: 11px;
+    font-weight: bold;
+    text-decoration: none !important;
+    padding: 8px 14px;
+    border: 3px outset #ffffff;
+    cursor: var(--pixel-cursor);
+    animation: blinker 1.4s step-start infinite;
+}
+
+.retro-back-btn:hover {
+    border: 3px inset #ffffff;
+    background: #d8d8d8;
+    color: #000080 !important;
+}
+
+@media (max-width: 640px) {
+    .retro-back-btn {
+        right: 10px;
+        bottom: 10px;
+        font-size: 10px;
+        padding: 6px 10px;
+    }
+}
+
 /* ===== о себе ===== */
 .about-table { background: #ffffe0; }
 

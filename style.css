@@ -92,44 +92,68 @@ body {
 
 .brand {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    color: var(--text);
-}
-
-.brand-mark {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: var(--accent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Unbounded', 'Manrope', sans-serif;
-    font-weight: 700;
-    font-size: 0.8em;
-    color: #fff;
-    flex-shrink: 0;
-}
-
-.brand-text {
-    display: flex;
     flex-direction: column;
-    line-height: 1.25;
+    line-height: 1.3;
+    text-decoration: none;
+    transition: color 0.25s ease;
 }
 
 .brand-name {
-    font-weight: 600;
-    font-size: 1em;
+    font-family: 'Unbounded', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 0.95em;
     letter-spacing: 0.2px;
+    color: var(--text);
 }
 
-.brand-role {
+.brand:hover .brand-name {
+    color: var(--accent);
+}
+
+.brand-suffix {
     font-size: 0.72em;
     font-weight: 600;
-    color: var(--accent);
+    color: var(--text-dim);
     letter-spacing: 0.3px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.lang-switch {
+    display: flex;
+    gap: 4px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    flex-shrink: 0;
+}
+
+.lang-switch button {
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 0.78em;
+    padding: 6px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.lang-switch button:hover {
+    color: var(--text);
+    background: var(--glass-hover);
+}
+
+.lang-switch button.active {
+    background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.32), rgba(var(--accent-rgb), 0.2));
+    color: var(--text);
 }
 
 .contact-btn {
@@ -685,16 +709,20 @@ body {
         padding: 14px 16px;
     }
 
-    .brand-name {
-        display: none;
-    }
-
     .contact-btn span:last-child {
         display: none;
     }
 
     .contact-btn {
         padding: 10px 14px;
+    }
+
+    .header-actions {
+        gap: 8px;
+    }
+
+    .lang-switch button {
+        padding: 6px 9px;
     }
 
     .intro {
