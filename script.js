@@ -1,5 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // Запоминаем реальный адрес страницы ДО того, как переключение языка
+    // подменит его в адресной строке на /en/ или /ru/ — иначе все
+    // относительные пути к видео/картинкам (они добавляются в DOM позже)
+    // начнут резолвиться от несуществующей папки /en/ и ломаться.
+    const SITE_BASE = document.baseURI;
+
     // =========================
     // ЯЗЫК (RU / EN)
     // Никаких отдельных index-en.html — весь текст лежит прямо в разметке
@@ -158,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // ---------- VIDEO ----------
             if (isVideoFile(mediaFile)) {
                 const video = document.createElement('video');
-                video.src = mediaFile;
+                video.src = new URL(mediaFile, SITE_BASE).href;
                 video.muted = true;
                 video.loop = true;
                 video.playsInline = true;
@@ -304,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // ---------- IMAGE ----------
             else if (isImageFile(mediaFile)) {
                 const img = document.createElement('img');
-                img.src = mediaFile;
+                img.src = new URL(mediaFile, SITE_BASE).href;
                 img.alt = mediaFile;
 
                 img.style.cssText = isSquare
@@ -376,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageModalImg = document.getElementById('imageModalImg');
 
     function openImageModal(src) {
-        imageModalImg.src = src;
+        imageModalImg.src = new URL(src, SITE_BASE).href;
         imageModal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
