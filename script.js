@@ -14,6 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
         ? urlLang
         : (localStorage.getItem(LANG_KEY) || 'ru');
 
+    // Если попали сюда через редирект-заглушку /en/ или /ru/ (там урл на
+    // мгновение превращается в index.html?lang=en) — сразу же приводим
+    // адресную строку обратно к красивому /en/, без ?lang=.
+    if (urlLang === 'en' || urlLang === 'ru') {
+        updateUrlForLang(urlLang);
+    }
+
     function applyLanguage(lang) {
         currentLang = lang === 'en' ? 'en' : 'ru';
         document.documentElement.lang = currentLang;
@@ -35,8 +42,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Переводит адресную строку в /en/ или /ru/, чтобы ссылку можно было
+    // сразу скопировать и отправить — работает только на главной странице,
+    // т.к. только для неё заведены редирект-заглушки /en/ и /ru/.
+    function updateUrlForLang(lang) {
+        if (/web1\.html$/.test(location.pathname)) return;
+        try {
+            let path = location.pathname.replace(/\/(en|ru)\/?$/, '/').replace(/index\.html$/, '');
+            if (!path.endsWith('/')) path += '/';
+            history.replaceState(null, '', path + lang + '/' + location.hash);
+        } catch {}
+    }
+
     document.querySelectorAll('.lang-switch [data-lang]').forEach(btn => {
-        btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
+        btn.addEventListener('click', () => {
+            applyLanguage(btn.dataset.lang);
+            updateUrlForLang(currentLang);
+        });
     });
 
     applyLanguage(currentLang);
