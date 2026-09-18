@@ -6,6 +6,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // начнут резолвиться от несуществующей папки /en/ и ломаться.
     const SITE_BASE = document.baseURI;
 
+    // Ссылка "НЕ НАЖИМАТЬ" ведёт на web1.html относительным путём — после
+    // того как адресную строку подменят на красивый /ru/ или /en/ (см.
+    // updateUrlForLang ниже), такой относительный путь резолвится от
+    // несуществующей папки /ru/ или /en/ и даёт 404. Фиксируем href
+    // заранее, пока SITE_BASE ещё указывает на реальный адрес страницы.
+    const dangerBtn = document.querySelector('.danger-btn');
+    if (dangerBtn) dangerBtn.href = new URL('web1.html', SITE_BASE).href;
+
     // =========================
     // ЯЗЫК (RU / EN)
     // Никаких отдельных index-en.html — весь текст лежит прямо в разметке
