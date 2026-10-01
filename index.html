@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-ru="Портфолио — Максим Аскеров" data-en="Portfolio — Maxim Askerov">Портфолио — Максим Аскеров</title>
+    <title data-i18n="pageTitle">Портфолио — Максим Аскеров</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,24 +14,43 @@
 
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
+    <canvas class="procedural-background" id="procedural-bg" aria-hidden="true"></canvas>
 
+    <div class="header-sentinel" aria-hidden="true"></div>
     <header class="site-header">
         <div class="header-inner">
-            <a href="#motion" class="brand">
+            <div class="brand mobile-brand" aria-label="GantMaster Portfolio">
                 <span class="brand-name">GantMaster</span>
-                <span class="brand-suffix" data-ru="Портфолио" data-en="Portfolio">Портфолио</span>
-            </a>
+                <span class="brand-suffix">Portfolio</span>
+            </div>
             <div class="header-actions">
-                <div class="lang-switch">
-                    <button type="button" data-lang="ru">RU</button>
-                    <button type="button" data-lang="en">EN</button>
-                </div>
                 <a href="https://t.me/gantmaster" target="_blank" class="contact-btn">
                     <svg class="contact-btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M21.05 3.16 2.87 10.4c-1.24.5-1.23 1.2-.23 1.5l4.65 1.45 1.8 5.5c.22.6.11.83.75.83.5 0 .72-.23 1-.5l2.4-2.33 4.7 3.47c.87.48 1.5.23 1.72-.8l3.1-14.6c.32-1.27-.48-1.84-1.71-1.76Zm-12.1 10.9-.62-.2-1.3-4.2 9.9-6.24c.4-.25.77-.11.47.17L9.1 13.9l-.15.16Z" fill="currentColor"/>
                     </svg>
-                    <span data-ru="Написать в Telegram" data-en="Message me on Telegram">Написать в Telegram</span>
+                    <span data-i18n="telegram">Написать в Telegram</span>
                 </a>
+                <div class="language-menu">
+                    <button class="language-current" type="button" aria-expanded="false" aria-haspopup="true" aria-controls="language-options">
+                        <span data-current-flag class="language-flag language-flag-ru" aria-hidden="true"></span>
+                        <span data-current-language>RU</span>
+                        <span class="language-chevron" aria-hidden="true">⌄</span>
+                    </button>
+                    <div class="language-options" id="language-options" hidden>
+                        <button class="language-option" type="button" data-lang="ru">
+                            <span class="language-flag language-flag-ru" aria-hidden="true"></span>
+                            <span class="language-option-label">Русский</span>
+                        </button>
+                        <button class="language-option" type="button" data-lang="en">
+                            <span class="language-flag language-flag-en" aria-hidden="true"></span>
+                            <span class="language-option-label">English</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="mobile-language-switch" role="group" aria-label="Language">
+                    <button class="mobile-language-button" type="button" data-lang="ru">RU</button>
+                    <button class="mobile-language-button" type="button" data-lang="en">EN</button>
+                </div>
             </div>
         </div>
     </header>
@@ -39,13 +58,13 @@
     <main class="container">
 
         <section class="intro">
-            <h1 class="intro-name" data-ru="Максим Аскеров" data-en="Maxim Askerov">Максим Аскеров</h1>
-            <p class="intro-role" data-ru="3D Motion Designer · 4+ года опыта" data-en="3D Motion Designer · 4+ years of experience">3D Motion Designer · 4+ года опыта</p>
-            <p class="intro-desc" data-ru="Ролики и креативы для игр, приложений и брендов, 3D-моделирование и анимация." data-en="Videos and creatives for games, apps and brands, 3D modeling and animation.">Ролики и креативы для игр, приложений и брендов, 3D-моделирование и анимация.</p>
+            <h1 class="intro-name" data-i18n="name">Максим Аскеров</h1>
+            <p class="intro-role" data-i18n="role">3D Motion Designer · 4+ года опыта</p>
+            <p class="intro-desc" data-i18n="introDescription">Ролики и креативы для игр, приложений и брендов, 3D-моделирование и анимация.</p>
 
             <div class="intro-meta">
                 <div class="meta-row">
-                    <span class="meta-label" data-ru="Работал с" data-en="Worked with">Работал с</span>
+                    <span class="meta-label" data-i18n="workedWith">Работал с</span>
                     <div class="company-row">
                         <span class="company-chip"><span class="company-chip-logo" style="background:#ef4444">CGB</span>CG Bros</span>
                         <span class="company-chip"><span class="company-chip-logo" style="background:#f9a8d4;color:#4a1942">CR</span>Crada.io</span>
@@ -55,7 +74,7 @@
                     </div>
                 </div>
                 <div class="meta-row">
-                    <span class="meta-label" data-ru="Навыки" data-en="Skills">Навыки</span>
+                    <span class="meta-label" data-i18n="skills">Навыки</span>
                     <div class="skill-row">
                         <span class="skill-dot-tag"><span class="skill-dot" style="background:#f5792a"></span>Blender</span>
                         <span class="skill-dot-tag"><span class="skill-dot" style="background:#b298ff"></span>After Effects</span>
@@ -69,8 +88,8 @@
         </section>
 
         <nav class="tabs-menu" id="tabsMenu">
-            <a href="#motion" class="tab-button active" data-tab="motion" data-ru="Моушндизайн &amp; Креативы" data-en="Motion Design &amp; Creatives" data-i18n-html>Моушндизайн &amp; Креативы</a>
-            <a href="#modeling" class="tab-button" data-tab="modeling" data-ru="Моделирование" data-en="3D Modeling">Моделирование</a>
+            <a href="#motion" class="tab-button active" data-tab="motion" data-i18n="motion">Моушндизайн &amp; Креативы</a>
+            <a href="#modeling" class="tab-button" data-tab="modeling" data-i18n="modeling">Моделирование</a>
         </nav>
 
         <div class="video-grid" id="videoGrid">
@@ -80,7 +99,7 @@
     </main>
 
     <footer class="site-footer">
-        <p>© <span id="year"></span> <span data-ru="Максим Аскеров" data-en="Maxim Askerov">Максим Аскеров</span></p>
+        <p>© <span id="year"></span> <span data-i18n="name">Максим Аскеров</span></p>
         <a href="https://t.me/gantmaster" target="_blank" class="footer-link">@gantmaster</a>
     </footer>
 
@@ -92,8 +111,6 @@
             <img class="image-modal-img" id="imageModalImg" src="" alt="">
         </div>
     </div>
-
-    <a href="web1.html" class="danger-btn" title="серьёзно, не стоит" data-ru="НЕ НАЖИМАТЬ" data-en="DO NOT CLICK" data-ru-title="серьёзно, не стоит" data-en-title="seriously, don't">НЕ НАЖИМАТЬ</a>
 
     <script src="script.js"></script>
 </body>

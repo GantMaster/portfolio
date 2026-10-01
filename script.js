@@ -6,27 +6,34 @@ document.addEventListener('DOMContentLoaded', () => {
     // начнут резолвиться от несуществующей папки /en/ и ломаться.
     const SITE_BASE = document.baseURI;
 
-    // Ссылка "НЕ НАЖИМАТЬ" ведёт на web1.html относительным путём — после
-    // того как адресную строку подменят на красивый /ru/ или /en/ (см.
-    // updateUrlForLang ниже), такой относительный путь резолвится от
-    // несуществующей папки /ru/ или /en/ и даёт 404. Фиксируем href
-    // заранее, пока SITE_BASE ещё указывает на реальный адрес страницы.
-    const dangerBtn = document.querySelector('.danger-btn');
-    if (dangerBtn) dangerBtn.href = new URL('web1.html', SITE_BASE).href;
-
-    // =========================
-    // ЯЗЫК (RU / EN)
-    // Никаких отдельных index-en.html — весь текст лежит прямо в разметке
-    // как data-ru/data-en, а переключение просто подставляет нужный вариант.
-    // Язык можно передать через ?lang=en, иначе используется сохранённый
-    // выбор (localStorage) или русский по умолчанию.
-    // =========================
-
     const LANG_KEY = 'site_lang';
+    const translations = {
+        ru: {
+            pageTitle: 'Портфолио — Максим Аскеров', portfolio: 'Портфолио',
+            telegram: 'Написать в Telegram', name: 'Максим Аскеров',
+            role: '3D Motion Designer · 4+ года опыта',
+            introDescription: 'Ролики и креативы для игр, приложений и брендов, 3D-моделирование и анимация.',
+            workedWith: 'Работал с', skills: 'Навыки', motion: 'Моушндизайн & Креативы', modeling: 'Моделирование',
+        },
+        en: {
+            pageTitle: 'Portfolio — Maxim Askerov', portfolio: 'Portfolio',
+            telegram: 'Message me on Telegram', name: 'Maxim Askerov',
+            role: '3D Motion Designer · 4+ years of experience',
+            introDescription: 'Videos and creatives for games, apps and brands, 3D modeling and animation.',
+            workedWith: 'Worked with', skills: 'Skills', motion: 'Motion Design & Creatives', modeling: '3D Modeling',
+        },
+    };
+
     const urlLang = new URLSearchParams(location.search).get('lang');
-    let currentLang = (urlLang === 'en' || urlLang === 'ru')
+    let currentLang = translations[urlLang]
         ? urlLang
-        : (localStorage.getItem(LANG_KEY) || 'ru');
+        : (translations[localStorage.getItem(LANG_KEY)] ? localStorage.getItem(LANG_KEY) : 'ru');
+    const languageMenu = document.querySelector('.language-menu');
+    const languageCurrent = document.querySelector('.language-current');
+    const languageOptions = document.querySelector('.language-options');
+    const languageButtons = [...document.querySelectorAll('.language-option[data-lang], .mobile-language-button[data-lang]')];
+    const hoverLanguageMenu = window.matchMedia('(hover: hover) and (pointer: fine)');
+    let languageCloseTimer = 0;
 
     // Если попали сюда через редирект-заглушку /en/ или /ru/ (там урл на
     // мгновение превращается в index.html?lang=en) — сразу же приводим
@@ -36,22 +43,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applyLanguage(lang) {
-        currentLang = lang === 'en' ? 'en' : 'ru';
+        currentLang = translations[lang] ? lang : 'ru';
+        const dictionary = translations[currentLang];
         document.documentElement.lang = currentLang;
+        document.title = dictionary.pageTitle;
         localStorage.setItem(LANG_KEY, currentLang);
 
-        document.querySelectorAll('[data-ru]').forEach(el => {
-            const text = currentLang === 'en' ? el.dataset.en : el.dataset.ru;
-            if (text === undefined) return;
-            if (el.hasAttribute('data-i18n-html')) el.innerHTML = text;
-            else el.textContent = text;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const text = dictionary[el.dataset.i18n];
+            if (text !== undefined) el.textContent = text;
         });
 
-        document.querySelectorAll('[data-ru-title]').forEach(el => {
-            el.title = currentLang === 'en' ? el.dataset.enTitle : el.dataset.ruTitle;
+        document.querySelectorAll('[data-i18n-title]').forEach(el => {
+            const title = dictionary[el.dataset.i18nTitle];
+            if (title !== undefined) el.title = title;
         });
 
-        document.querySelectorAll('.lang-switch [data-lang]').forEach(btn => {
+        const currentLanguageLabel = document.querySelector('[data-current-language]');
+        const currentLanguageFlag = document.querySelector('[data-current-flag]');
+        if (currentLanguageLabel) currentLanguageLabel.textContent = currentLang.toUpperCase();
+        if (currentLanguageFlag) currentLanguageFlag.className = `language-flag language-flag-${currentLang}`;
+
+        languageButtons.forEach(btn => {
             btn.classList.toggle('active', btn.dataset.lang === currentLang);
         });
     }
@@ -60,7 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // сразу скопировать и отправить — работает только на главной странице,
     // т.к. только для неё заведены редирект-заглушки /en/ и /ru/.
     function updateUrlForLang(lang) {
-        if (/web1\.html$/.test(location.pathname)) return;
         try {
             let path = location.pathname.replace(/\/(en|ru)\/?$/, '/').replace(/index\.html$/, '');
             if (!path.endsWith('/')) path += '/';
@@ -68,21 +80,307 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch {}
     }
 
-    document.querySelectorAll('.lang-switch [data-lang]').forEach(btn => {
+    function closeLanguageMenu() {
+        if (!languageOptions || !languageCurrent) return;
+        languageOptions.hidden = true;
+        languageCurrent.setAttribute('aria-expanded', 'false');
+    }
+
+    function openLanguageMenu() {
+        if (!languageOptions || !languageCurrent) return;
+        languageOptions.hidden = false;
+        languageCurrent.setAttribute('aria-expanded', 'true');
+    }
+
+    languageCurrent?.addEventListener('click', event => {
+        if (!languageOptions) return;
+        if (hoverLanguageMenu.matches && event.detail > 0) return;
+        const isOpen = languageCurrent.getAttribute('aria-expanded') === 'true';
+        if (isOpen) closeLanguageMenu();
+        else openLanguageMenu();
+    });
+
+    languageButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             applyLanguage(btn.dataset.lang);
             updateUrlForLang(currentLang);
+            closeLanguageMenu();
         });
+    });
+
+    languageMenu?.addEventListener('pointerenter', () => {
+        if (!hoverLanguageMenu.matches) return;
+        window.clearTimeout(languageCloseTimer);
+        openLanguageMenu();
+    });
+
+    languageMenu?.addEventListener('pointerleave', () => {
+        if (!hoverLanguageMenu.matches) return;
+        languageCloseTimer = window.setTimeout(closeLanguageMenu, 140);
+    });
+
+    document.addEventListener('click', event => {
+        const target = event.target instanceof Element ? event.target : null;
+        if (languageMenu && target && !languageMenu.contains(target)) closeLanguageMenu();
+    });
+
+    languageMenu?.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            closeLanguageMenu();
+            languageCurrent?.focus();
+        }
     });
 
     applyLanguage(currentLang);
 
-    // =========================
-    // ДАННЫЕ
+    const siteHeader = document.querySelector('.site-header');
+    const headerSentinel = document.querySelector('.header-sentinel');
+    if (siteHeader && headerSentinel) {
+        const headerObserver = new IntersectionObserver(([entry]) => {
+            siteHeader.classList.toggle('is-scrolled', !entry.isIntersecting);
+        }, { threshold: 0 });
+        headerObserver.observe(headerSentinel);
+    }
+
+    const backgroundCanvas = document.getElementById('procedural-bg');
+    const backgroundContext = backgroundCanvas?.getContext('2d');
+    if (backgroundCanvas && backgroundContext) {
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const coarsePointer = window.matchMedia('(pointer: coarse)');
+        const pointer = { x: -1000, y: -1000, influence: 0 };
+        const pointerFlow = { x: 0, y: 0 };
+        const pointerTarget = { x: -1000, y: -1000, active: false };
+        let width = 0;
+        let height = 0;
+        let frame = 0;
+        let startedAt = performance.now();
+        let lastFrame = 0;
+        let lastDrawAt = 0;
+        let touchContact = false;
+        let touchReleaseTimer = 0;
+        let clickReleaseTimer = 0;
+        let clickImpulse = 0;
+        let clickImpulseTarget = 0;
+        let pointerInitialized = false;
+
+        function resizeBackground() {
+            cancelAnimationFrame(frame);
+            frame = 0;
+            const ratio = Math.min(window.devicePixelRatio || 1, 1);
+            width = window.innerWidth;
+            height = window.innerHeight;
+            backgroundCanvas.width = Math.round(width * ratio);
+            backgroundCanvas.height = Math.round(height * ratio);
+            backgroundContext.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+            const sideSpace = Math.max(18, (width - Math.min(width - 48, 1400)) * 0.5);
+            const topSpace = Math.min(height * 0.08, 38);
+            drawBackground(performance.now(), false);
+            if (!reducedMotion.matches && document.visibilityState === 'visible') {
+                frame = requestAnimationFrame(drawBackground);
+            }
+        }
+
+        const cursorOffset = { x: 0, y: 0 };
+
+        function getCursorOffset(x, y, radius, strength) {
+            const dx = x - pointer.x;
+            const dy = y - pointer.y;
+            const distance = Math.hypot(dx, dy);
+            const normalizedDistance = distance / radius;
+            const airEnvelope = Math.exp(-2.2 * normalizedDistance * normalizedDistance)
+                * (1 - Math.exp(-distance / (radius * 0.14)));
+            const airflow = airEnvelope * strength * pointer.influence;
+            const clickPush = airEnvelope * strength * 0.55 * clickImpulse;
+            cursorOffset.x = pointerFlow.x * airflow + (distance ? dx / distance * clickPush : 0);
+            cursorOffset.y = pointerFlow.y * airflow + (distance ? dy / distance * clickPush : 0);
+            return cursorOffset;
+        }
+
+        function drawMotionTrails(time, sideSpace) {
+            const context = backgroundContext;
+            const mobile = coarsePointer.matches;
+            const sampleCount = mobile ? 32 : 48;
+            const lanePositions = mobile ? [0.18, 0.54, 0.9] : [0.13, 0.37, 0.63, 0.87];
+            const laneCount = lanePositions.length;
+            const lanePosition = lane => lanePositions[lane];
+            const bendScale = mobile ? 0.12 : 0.08;
+            const reactionRadius = mobile
+                ? Math.max(190, width * 0.58)
+                : Math.max(150, Math.min(230, height * 0.22));
+            const reactionStrength = mobile ? 16 : 34;
+            context.lineWidth = mobile ? 0.85 : 0.75;
+            for (let side = 0; side < 2; side++) {
+                for (let lane = 0; lane < laneCount; lane++) {
+                    context.beginPath();
+                    for (let sample = 0; sample <= sampleCount; sample++) {
+                        const progress = sample / sampleCount;
+                        const y = progress * height;
+                        const baseBend = Math.sin(progress * 7 + time * 0.12 + lane * 1.45) * sideSpace * bendScale;
+                        const baseX = side === 0
+                            ? sideSpace * lanePosition(lane) + baseBend
+                            : width - sideSpace * lanePosition(lane) - baseBend;
+                        const offset = getCursorOffset(baseX, y, reactionRadius, reactionStrength);
+                        const x = baseX + offset.x;
+                        const shiftedY = y + offset.y;
+                        if (sample === 0) context.moveTo(x, shiftedY);
+                        else context.lineTo(x, shiftedY);
+                    }
+                    context.strokeStyle = `rgba(126, 136, 216, ${Math.max(0.052, 0.095 - lane * 0.012)})`;
+                    context.stroke();
+
+                }
+            }
+
+            context.beginPath();
+            for (let side = 0; side < 2; side++) {
+                for (let lane = 0; lane < laneCount; lane++) {
+                    const progress = (time * 0.018 + lane * 0.29) % 1;
+                    const bend = Math.sin(progress * 7 + time * 0.12 + lane * 1.45) * sideSpace * bendScale;
+                    const inset = sideSpace * lanePosition(lane) + bend;
+                    const baseX = side === 0 ? inset : width - inset;
+                    const baseY = progress * height;
+                    const offset = getCursorOffset(baseX, baseY, reactionRadius, reactionStrength);
+                    const x = baseX + offset.x;
+                    const y = baseY + offset.y;
+                    context.moveTo(x + 1.1, y);
+                    context.arc(x, y, 1.1, 0, Math.PI * 2);
+                }
+            }
+            context.fillStyle = 'rgba(151, 160, 224, 0.19)';
+            context.fill();
+
+        }
+
+        function drawProceduralBackground(time) {
+            const context = backgroundContext;
+            const sideSpace = Math.max(18, (width - Math.min(width - 48, 1400)) * 0.5);
+            const topSpace = Math.min(height * 0.08, 38);
+            context.save();
+            context.beginPath();
+            context.rect(0, 0, sideSpace, height);
+            context.rect(width - sideSpace, 0, sideSpace, height);
+            context.rect(0, 0, width, topSpace);
+            context.rect(0, height - topSpace, width, topSpace);
+            context.clip();
+
+            drawMotionTrails(time, sideSpace);
+            context.restore();
+        }
+
+        function drawBackground(now, scheduleNextFrame = true) {
+            const maxFps = coarsePointer.matches ? 20 : 24;
+            if (scheduleNextFrame && !reducedMotion.matches && now - lastDrawAt < 1000 / maxFps) {
+                frame = requestAnimationFrame(drawBackground);
+                return;
+            }
+            lastDrawAt = now;
+            const time = reducedMotion.matches ? 0 : (now - startedAt) / 1000;
+            const delta = lastFrame ? Math.min((now - lastFrame) / 1000, 0.05) : 0;
+            lastFrame = now;
+            const positionEase = 1 - Math.exp(-delta * 4.2);
+            const previousX = pointer.x;
+            const previousY = pointer.y;
+            pointer.influence += ((pointerTarget.active ? 1 : 0) - pointer.influence) * (1 - Math.exp(-delta * 3.2));
+            pointer.x += (pointerTarget.x - pointer.x) * positionEase;
+            pointer.y += (pointerTarget.y - pointer.y) * positionEase;
+            const flowEase = 1 - Math.exp(-delta * 7);
+            let flowTargetX = delta ? (pointer.x - previousX) / delta / 700 : 0;
+            let flowTargetY = delta ? (pointer.y - previousY) / delta / 700 : 0;
+            const flowTargetLength = Math.hypot(flowTargetX, flowTargetY);
+            if (flowTargetLength > 1) {
+                flowTargetX /= flowTargetLength;
+                flowTargetY /= flowTargetLength;
+            }
+            pointerFlow.x += (flowTargetX - pointerFlow.x) * flowEase;
+            pointerFlow.y += (flowTargetY - pointerFlow.y) * flowEase;
+            const impulseEase = 1 - Math.exp(-delta * (clickImpulseTarget > clickImpulse ? 5 : 2.4));
+            clickImpulse += (clickImpulseTarget - clickImpulse) * impulseEase;
+            backgroundContext.clearRect(0, 0, width, height);
+
+            drawProceduralBackground(time);
+            frame = 0;
+            if (scheduleNextFrame && !reducedMotion.matches && document.visibilityState === 'visible') {
+                frame = requestAnimationFrame(drawBackground);
+            }
+        }
+
+        window.addEventListener('pointermove', event => {
+            if (reducedMotion.matches) return;
+            if (event.pointerType === 'touch' && !touchContact) return;
+            if (!pointerInitialized) {
+                pointer.x = event.clientX;
+                pointer.y = event.clientY;
+                pointerInitialized = true;
+            }
+            pointerTarget.x = event.clientX;
+            pointerTarget.y = event.clientY;
+            pointerTarget.active = true;
+        }, { passive: true });
+
+        window.addEventListener('pointerdown', event => {
+            if (reducedMotion.matches) return;
+            if (event.pointerType === 'touch') {
+                touchContact = true;
+                window.clearTimeout(touchReleaseTimer);
+            } else {
+                if (event.button !== 0) return;
+            }
+            if (!pointerInitialized) {
+                pointer.x = event.clientX;
+                pointer.y = event.clientY;
+                pointerInitialized = true;
+            }
+            window.clearTimeout(clickReleaseTimer);
+            clickImpulseTarget = event.pointerType === 'touch' ? 0.65 : 0.85;
+            clickReleaseTimer = window.setTimeout(() => {
+                clickImpulseTarget = 0;
+            }, 180);
+            pointerTarget.x = event.clientX;
+            pointerTarget.y = event.clientY;
+            pointerTarget.active = true;
+        }, { passive: true });
+
+        const releaseTouchPointer = event => {
+            if (event.pointerType !== 'touch') return;
+            touchContact = false;
+            touchReleaseTimer = window.setTimeout(() => {
+                pointerTarget.active = false;
+            }, 180);
+        };
+        window.addEventListener('pointerup', releaseTouchPointer, { passive: true });
+        window.addEventListener('pointercancel', releaseTouchPointer, { passive: true });
+
+        window.addEventListener('pointerout', event => {
+            if (event.pointerType !== 'touch' && event.relatedTarget === null) pointerTarget.active = false;
+        }, { passive: true });
+
+        window.addEventListener('resize', resizeBackground, { passive: true });
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                cancelAnimationFrame(frame);
+                frame = 0;
+            } else if (!reducedMotion.matches && !frame) {
+                frame = requestAnimationFrame(drawBackground);
+            }
+        });
+        reducedMotion.addEventListener?.('change', () => {
+            cancelAnimationFrame(frame);
+            frame = 0;
+            if (!reducedMotion.matches && document.visibilityState === 'visible') {
+                frame = requestAnimationFrame(drawBackground);
+            } else {
+                drawBackground(performance.now());
+            }
+        });
+
+        resizeBackground();
+    }
+
     // =========================
 
     const motionFiles = [
-        '15.mp4', '5.mp4', 
+        '15.mp4', '5.mp4',
         '8.mp4',
         '17.mp4','3.mp4', '18.mp4',
         '7.mp4',
