@@ -33,6 +33,7 @@ let mediaManifest = [];
 let manifestStatus = "";
 let draggedProjectId = "";
 let manifestChanged = false;
+let previewObserver;
 
 function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -130,7 +131,7 @@ function renderProject(project, tab, position, length) {
     const previewSrc = local ? `../${src}` : src;
     const isVideo = /\.(mp4|webm|mov|avi|mkv)(\?.*)?$/i.test(src);
     const preview = isVideo
-        ? `<video src="${escapeHtml(previewSrc)}" muted playsinline preload="none"></video>`
+        ? `<video src="${escapeHtml(previewSrc)}" muted loop playsinline preload="none"></video>`
         : `<img src="${escapeHtml(previewSrc)}" alt="" loading="lazy">`;
     return `<article class="compact-row project-row${project.visible === false ? " is-hidden" : ""}" data-project-id="${escapeHtml(key)}" draggable="true">
         <span class="drag-grip" aria-hidden="true">⠿</span><span class="project-thumb">${preview}</span>
@@ -195,6 +196,30 @@ function renderSection() {
     editorContent.innerHTML = isContent
         ? renderProjects()
         : `<nav class="collection-tabs" aria-label="Разделы метаданных">${[["texts", "Информация"], ["companies", "Компании"], ["skills", "Навыки"], ["links", "Кнопки и ссылки"]].map(([key, label]) => `<button class="collection-tab${activeCollection === key ? " active" : ""}" type="button" data-collection="${key}">${label}</button>`).join("")}</nav>${({ texts: renderTexts, companies: renderCompanies, skills: renderSkills, links: renderLinks })[activeCollection]()}`;
+    activateVisibleVideoPreviews();
+}
+
+function activateVisibleVideoPreviews() {
+    previewObserver?.disconnect();
+    const videos = editorContent.querySelectorAll(".project-thumb video");
+    if (!("IntersectionObserver" in window)) {
+        videos.forEach(video => {
+            video.preload = "metadata";
+            video.play().catch(() => {});
+        });
+        return;
+    }
+    previewObserver = new IntersectionObserver(entries => {
+        for (const entry of entries) {
+            if (entry.isIntersecting) {
+                entry.target.preload = "metadata";
+                entry.target.play().catch(() => {});
+            } else {
+                entry.target.pause();
+            }
+        }
+    }, { rootMargin: "120px 0px", threshold: 0.1 });
+    videos.forEach(video => previewObserver.observe(video));
 }
 
 function setPath(path, value) {
@@ -304,7 +329,7 @@ async function loadContent() {
         dirty = manifestChanged;
         renderSection();
         const message = error.code === "permission-denied"
-            ? "Нет доступа к Firestore. Проверьте, что UID администратора опубликован в правилах Firestore."
+            ? "Firestore отклонил чтение portfolio/public. Откройте gant-design → Firestore Database → Rules, опубликуйте актуальные правила и проверьте, что выбрана база (default)."
             : `Не удалось загрузить данные из Firestore (${error.code || "ошибка сети"}).`;
         showMessage(saveMessage, message, true);
     } finally {
