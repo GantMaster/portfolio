@@ -47,7 +47,7 @@ h3 { margin-bottom: 0; font-size: 16px; }
 .auth-panel input:focus, .field input:focus, .field textarea:focus, .field select:focus { border-color: #7279cb; box-shadow: 0 0 0 3px #777de82b; }
 .primary-button { border: 1px solid #777dd0; border-radius: 999px; background: linear-gradient(180deg, #41445f, #282a3b); color: white; padding: 11px 18px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 24px #20223c80; }
 .primary-button:hover { filter: brightness(1.12); }
-.editor-panel #saveButton { position: fixed; z-index: 20; right: 20px; bottom: 20px; min-width: 132px; box-shadow: 0 8px 28px #000b, 0 8px 24px #20223c80; }
+.editor-panel #saveButton { position: fixed; z-index: 20; top: 50vh; right: 12px; bottom: auto; min-width: 132px; transform: translateY(-50%); box-shadow: 0 8px 28px #000b, 0 8px 24px #20223c80; }
 .primary-button:disabled, .quiet-button:disabled, .icon-button:disabled { opacity: .48; cursor: not-allowed; }
 .notice { min-height: 1.5em; margin: 8px 0 0; color: #b7bbf5; font-size: 13px; }
 .notice.error { color: var(--danger); }
@@ -142,7 +142,7 @@ h3 { margin-bottom: 0; font-size: 16px; }
     .editor-toolbar { align-items: flex-start; flex-direction: column; }
     .toolbar-actions { width: 100%; }
     .toolbar-actions button { flex: 1; }
-    .editor-panel #saveButton { right: 12px; bottom: 12px; min-width: 112px; }
+    .editor-panel #saveButton { top: auto; right: 12px; bottom: 12px; min-width: 112px; transform: none; }
     .section-heading { align-items: flex-start; }
     .field-grid { gap: 11px; }
     .row-edit-fields .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
             role: '3D Motion Designer · 4+ года опыта',
             introDescription: 'Ролики и креативы для игр, приложений и брендов, 3D-моделирование и анимация.',
             workedWith: 'Работал с', skills: 'Навыки', motion: 'Моушндизайн & Креативы', modeling: 'Моделирование',
+            loadingProjects: 'Загружаю проекты…',
         },
         en: {
             pageTitle: 'Portfolio — Maxim Askerov', portfolio: 'Portfolio',
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
             role: '3D Motion Designer · 4+ years of experience',
             introDescription: 'Videos and creatives for games, apps and brands, 3D modeling and animation.',
             workedWith: 'Worked with', skills: 'Skills', motion: 'Motion Design & Creatives', modeling: '3D Modeling',
+            loadingProjects: 'Loading projects…',
         },
     };
 
@@ -693,9 +695,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (!portfolioContentReady) {
-            videoGrid.replaceChildren();
             return;
         }
+
+        videoGrid.setAttribute('aria-busy', 'false');
 
         if (tab === 'motion') createMediaItems(motionFiles, false);
         if (tab === 'modeling') createMediaItems(modelingFiles, true);
@@ -833,6 +836,9 @@ document.addEventListener('DOMContentLoaded', () => {
         applyLanguage(currentLang);
         if (Array.isArray(content.links)) renderCustomLinks(content.links, currentLang);
         switchTab(currentTab);
+        document.querySelector('main.container')?.setAttribute('aria-busy', 'false');
+        document.getElementById('portfolioPageLoader')?.setAttribute('hidden', '');
+        document.documentElement.classList.remove('portfolio-data-loading');
     });
 
     if (window.__loadedPortfolioContent) {

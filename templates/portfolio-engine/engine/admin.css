@@ -1,0 +1,24 @@
+:root { color-scheme: dark; font: 16px/1.5 system-ui, sans-serif; background: #0b0b10; color: #f3f3f7; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input, textarea { font: inherit; }
+button { border: 1px solid #7077c5; border-radius: 10px; padding: 10px 16px; background: #353954; color: white; cursor: pointer; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.admin-shell { width: min(960px, calc(100% - 32px)); margin: 28px auto; }
+header, .editor-heading, .actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+a, #user-label, #help-text, .panel > p, .editor-heading p { color: #aaaaba; }
+a { text-decoration: none; }
+.panel { margin-top: 28px; padding: 24px; border: 1px solid #2b2b38; border-radius: 18px; background: #14141c; }
+.panel[hidden] { display: none; }
+h1 { margin: 0; font-size: clamp(24px, 4vw, 34px); }
+.editor-heading p, .panel > p { margin: 6px 0 20px; }
+form { display: grid; gap: 14px; max-width: 440px; }
+label { display: grid; gap: 6px; }
+input, textarea { width: 100%; border: 1px solid #393947; border-radius: 9px; padding: 10px 12px; background: #0c0c12; color: #f3f3f7; }
+#content-json { display: block; min-height: 55vh; margin-top: 7px; resize: vertical; tab-size: 2; font: 13px/1.55 ui-monospace, monospace; }
+#help-text { font-size: 13px; }
+.actions { justify-content: flex-end; margin-top: 18px; }
+#status { margin-right: auto; color: #b8bcff; font-size: 14px; }
+#status.error { color: #ff8585; }
+.quiet { border-color: #393947; background: transparent; }
+@media (max-width: 600px) { .admin-shell { width: calc(100% - 20px); margin: 12px auto; } .panel { padding: 17px; } .editor-heading { align-items: flex-start; } }

@@ -1,8 +1,8 @@
 # Firebase setup
 
-The portfolio uses Cloud Firestore document `portfolio/public` for published content. Visitors can read only this document; only the administrator UID may write it.
+The portfolio uses Cloud Firestore document `portfolio/public` for published content. Visitors can read only this document; only the administrator UID may write it. Firestore stores content metadata, not media files.
 
-Firebase Hosting is configured to publish the repository root, including the `assets/` media files. Pushes to `feature/portfolio-refresh` deploy the live Hosting channel; pushes to `main` do not. Before the first automated deploy, enable Firebase Hosting once in the Firebase Console so the default `gant-design.web.app` site exists.
+Firebase Hosting publishes the repository root except `assets/videos/**`. Images and small assets are hosted on Firebase; videos in `assets/videos/` are fetched from GitHub Raw. Pushes to `feature/portfolio-refresh` deploy the live Hosting channel and Firestore Rules; pushes to `main` do not. Before the first automated deploy, enable Firebase Hosting once in the Firebase Console so the default `gant-design.web.app` site exists.
 
 The GitHub Actions workflow needs the repository secret `FIREBASE_SERVICE_ACCOUNT`, containing a Firebase deployment service-account JSON key. Add it in GitHub → repository **Settings → Secrets and variables → Actions → New repository secret**. Never commit the key or paste it into chat. After the first deployment, add `gant-design.web.app` to Firebase Authentication → Settings → Authorized domains if it is not already listed.
 
@@ -17,8 +17,10 @@ The browser Firebase config in `firebase-config.js` is not a secret. Firestore R
 
 ## Content shape
 
-The initial content shape is in `portfolio-defaults.js`. `texts` stores Russian and English copy. `companies`, `skills`, `projects`, and `links` are ordered arrays. A company or skill may use `iconUrl`; a project uses `src`, `tab` (`motion` or `modeling`), `order`, and `visible`. Relative project paths resolve from the website root; absolute HTTPS URLs can be used for externally hosted assets.
+The initial content shape is in `portfolio-defaults.js`. `texts` stores Russian and English copy. `companies`, `skills`, `projects`, and `links` are ordered arrays. A company or skill may use `iconUrl`; a project uses `src`, `tab` (`motion` or `modeling`), `order`, and `visible`. Relative image paths resolve from the website root. Video paths under `assets/videos/` resolve to the configured GitHub Raw repository and branch; update that mapping in `script.js` and `login/admin.js` when changing repository or branch. Absolute HTTPS URLs can also be used for externally hosted assets.
+
+The CI script `scripts/generate-assets-manifest.mjs` recursively indexes supported files under `assets/videos/` and writes `assets-manifest.json` for the admin editor. Newly detected files are added to the content list hidden by default. Removing a video from Git removes its entry during the next admin load; save the resulting content to apply that removal to Firestore. The public site filters hidden projects before creating media elements, and video requests are lazy-loaded near the viewport.
 
 ## Cloudflare media
 
-R2 upload is intentionally not enabled yet. For production uploads, add a Cloudflare Worker or Pages Function that verifies the Firebase ID token and returns a short-lived, object-specific R2 upload URL. Store the R2 credentials only as Worker secrets. Until an R2 bucket and delivery hostname are configured, existing local media paths continue to work.
+Direct upload/delete from the admin is intentionally not enabled. Add/remove videos in Git and let CI regenerate the manifest; visitors fetch active videos from GitHub Raw, not Firebase Storage. For a later move to object storage, add a trusted upload service that verifies the Firebase ID token and issues short-lived, object-specific upload URLs. Store storage credentials only as server-side secrets. GitHub Raw is a convenient free starting point, not a dedicated production CDN guarantee.

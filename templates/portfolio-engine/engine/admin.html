@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Portfolio editor</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <main class="admin-shell">
+        <header><a href="../">← Back to site</a><span id="user-label"></span></header>
+        <section class="panel" id="login-panel">
+            <h1>Portfolio editor</h1>
+            <p>Sign in with the owner account.</p>
+            <form id="login-form">
+                <label>Email<input name="email" type="email" autocomplete="username" required></label>
+                <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+                <button type="submit">Sign in</button>
+            </form>
+        </section>
+        <section class="panel" id="editor-panel" hidden>
+            <div class="editor-heading"><div><h1>Portfolio content</h1><p>Edit the JSON document used by the public site.</p></div><button class="quiet" id="logout-button" type="button">Sign out</button></div>
+            <label for="content-json">Content JSON</label>
+            <textarea id="content-json" spellcheck="false" aria-describedby="help-text"></textarea>
+            <p id="help-text">Adapt the content schema and this editor UI to each project's sections.</p>
+            <div class="actions"><span id="status" role="status" aria-live="polite"></span><button id="save-button" type="button" disabled>Save</button></div>
+        </section>
+    </main>
+    <script type="module" src="admin.js"></script>
+</body>
+</html>

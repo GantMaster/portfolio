@@ -1,0 +1,16 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "firestore.rules",
+      "debug.log",
+      "**/.*",
+      "**/node_modules/**",
+      "**/firebase-debug.log"
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}
