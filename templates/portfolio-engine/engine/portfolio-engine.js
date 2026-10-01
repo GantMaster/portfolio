@@ -46,6 +46,18 @@ export async function loadPortfolio(defaults) {
     }
 }
 
+/** Render data before revealing the page so default HTML cannot flash first. */
+export async function bootstrapPortfolio({ defaults, render, contentElement, loadingElement }) {
+    if (typeof render !== "function") throw new TypeError("bootstrapPortfolio requires a render function.");
+    contentElement?.setAttribute("aria-busy", "true");
+    const content = await loadPortfolio(defaults);
+    await render(content);
+    contentElement?.removeAttribute("data-loading");
+    contentElement?.setAttribute("aria-busy", "false");
+    loadingElement?.setAttribute("hidden", "");
+    return content;
+}
+
 /** Subscribe to auth state for a custom admin screen. */
 export function observeAdmin(callback) {
     return onAuthStateChanged(auth, callback);

@@ -7,6 +7,8 @@
 ### Что лежит в engine/
 
 - `portfolio-engine.js` — Firestore read с fallback на defaults, Firebase Auth sign-in/sign-out и защищённый UX-вызов сохранения.
+- `portfolio-engine.js` экспортирует `bootstrapPortfolio()`: ждёт Firebase read, рендерит данные и только потом раскрывает страницу.
+- `public-loader.css` — полноэкранное loading-состояние, скрытие контента до готовности и reduced-motion вариант спиннера.
 - `firebase-client.js`, `config.example.js` — инициализация Firebase.
 - `defaults.example.js` — пример начальных данных.
 - `admin.html`, `admin.css`, `admin.js` — минимальная рабочая CMS с входом владельца и JSON-редактором; используй как стартовую админку или как каркас для UI с плитками.
@@ -16,15 +18,21 @@
 
 Для первого запуска скопируй `defaults.example.js` как `defaults.js`, `config.example.js` как `config.js`, `firestore.rules.example` в корень как `firestore.rules`, `firebase.json.example` в корень как `firebase.json`, а workflow в `.github/workflows/firebase-hosting.yml`. Замени все значения `REPLACE_WITH_...` до deploy. Открой `engine/admin.html` для CMS.
 
-Подключение публичного модуля после копирования defaults как `engine/defaults.js`:
+Подключение публичного модуля после копирования defaults как `engine/defaults.js`. В HTML загрузчик должен стоять сразу, а весь динамический контент помести в `data-portfolio-content` с начальным `data-loading`. Не рендери defaults заранее отдельным вызовом: bootstrap сначала прочитает Firestore, затем вызовет render и покажет страницу.
 
 ```js
 import { portfolioDefaults } from "./engine/defaults.js";
-import { loadPortfolio } from "./engine/portfolio-engine.js";
+import { bootstrapPortfolio } from "./engine/portfolio-engine.js";
 
-const content = await loadPortfolio(portfolioDefaults);
-renderPortfolio(content); // проектная функция, связанная с дизайном нового сайта
+await bootstrapPortfolio({
+  defaults: portfolioDefaults,
+  contentElement: document.querySelector("[data-portfolio-content]"),
+  loadingElement: document.querySelector("[data-portfolio-loader]"),
+  render: content => renderPortfolio(content), // функция под дизайн конкретного сайта
+});
 ```
+
+Разметка загрузчика: `<div data-portfolio-loader role="status" aria-live="polite"><span class="portfolio-loading-spinner" aria-hidden="true"></span><span>Loading portfolio…</span></div>`. Подключи `public-loader.css`. `bootstrapPortfolio()` снимает `data-loading` и скрывает спиннер только после рендера. При успешном запросе первым виден Firestore-контент; при отсутствии документа или ошибке чтения `loadPortfolio()` отдаёт defaults и страница показывает их после рендера.
 
 CMS подключает `observeAdmin`, `signInAdmin`, `signOutAdmin` и `savePortfolio` из `portfolio-engine.js`; UI редактора остаётся проектным.
 
@@ -60,7 +68,7 @@ CMS подключает `observeAdmin`, `signInAdmin`, `signOutAdmin` и `saveP
 7. Если каталог файлов строится из Git, добавить CI-скрипт manifest и проверить, что каталог публикуется. Исключать файлы из Firebase deploy только если они действительно доступны на внешнем media origin.
 8. Добавить workflow для нужной production-ветки, Firebase project/site ID и secret `FIREBASE_SERVICE_ACCOUNT`. Не помещать ключи service account или object storage в frontend или Git.
 9. Настроить локаль/маршруты так, чтобы `/ru` и `/en` открывались напрямую и переживали refresh без ненужного редиректа на `index.html?lang=...`.
-10. Проверить end-to-end: нет Firestore документа → defaults; вход владельца → загрузка/редактирование/сохранение; посетитель → только публичное чтение; скрытая плитка → нет запроса медиа; добавленный/удалённый Git-файл → обновление manifest и списка; deploy → свежая версия.
+10. Проверить end-to-end: при замедленном Firestore первым виден loader, дефолтный HTML не мелькает; после чтения отображаются данные базы; нет документа/ошибка чтения → defaults только после попытки; вход владельца → загрузка/редактирование/сохранение; посетитель → только публичное чтение; скрытая плитка → нет запроса медиа; добавленный/удалённый Git-файл → обновление manifest и списка; deploy → свежая версия.
 
 ## Что заменить при переносе текущей реализации
 

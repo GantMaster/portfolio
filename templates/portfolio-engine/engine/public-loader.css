@@ -1,0 +1,37 @@
+[data-portfolio-content][data-loading] {
+    visibility: hidden;
+}
+
+[data-portfolio-loader] {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #0a0a0f;
+    color: #9797a6;
+    font: 500 14px/1.5 system-ui, sans-serif;
+}
+
+[data-portfolio-loader][hidden] {
+    display: none;
+}
+
+.portfolio-loading-spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid rgb(255 255 255 / 12%);
+    border-top-color: #858ce8;
+    border-radius: 50%;
+    animation: portfolio-spinner 0.9s linear infinite;
+}
+
+@keyframes portfolio-spinner {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .portfolio-loading-spinner { animation: none; }
+}
