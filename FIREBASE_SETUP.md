@@ -9,10 +9,9 @@ The GitHub Actions workflow needs the repository secret `FIREBASE_SERVICE_ACCOUN
 ## One-time console steps
 
 1. In Firebase Console → Authentication → Users, create an administrator user if one does not already exist. Do not add public registration to the website.
-2. Open the site over HTTPS (or `http://localhost` while developing) and visit `/login/`. Sign in. The dashboard displays the account UID.
-3. In Firebase Console → Firestore Database → Rules, paste `firestore.rules`, replace `REPLACE_WITH_ADMIN_UID` with the UID shown in the dashboard, and publish the rules.
-4. In Authentication → Settings → Authorized domains, add the deployed site hostname before testing production sign-in.
-5. Return to `/login/`, load the editor and save once to create `portfolio/public`. The public portfolio switches to Firestore content after this document exists.
+2. The administrator UID is already set in `firestore.rules`. The GitHub Actions workflow publishes these rules on every push to `feature/portfolio-refresh`; do not replace them with broader console rules.
+3. In Authentication settings, add the deployed site hostname to Authorized domains if it is not already listed.
+4. Visit `/login/`, sign in, load the editor, and save once to create `portfolio/public`. The public portfolio switches to Firestore content after this document exists.
 
 The browser Firebase config in `firebase-config.js` is not a secret. Firestore Rules are the access-control boundary. Never put a service-account JSON, R2 access key, or Cloudflare API token in frontend files.
 

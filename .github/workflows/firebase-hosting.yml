@@ -22,3 +22,11 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           projectId: gant-design
           channelId: live
+      - uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          project_id: gant-design
+      - name: Deploy Firestore rules
+        run: |
+          npm install --global firebase-tools
+          firebase deploy --only firestore:rules --project gant-design --non-interactive
