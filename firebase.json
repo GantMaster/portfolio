@@ -12,14 +12,7 @@
       "**/node_modules/**",
       "**/firebase-debug.log"
     ],
-    "cleanUrls": true,
-    "redirects": [
-      {
-        "source": "/login",
-        "destination": "/login/",
-        "type": 301
-      }
-    ]
+    "cleanUrls": true
   },
   "firestore": {
     "rules": "firestore.rules"

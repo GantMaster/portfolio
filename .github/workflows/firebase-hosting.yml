@@ -17,6 +17,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Stamp deployment version
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          index = Path("index.html")
+          html = index.read_text(encoding="utf-8")
+          version = f"v1.1.{os.environ['GITHUB_RUN_NUMBER']}"
+          html, replacements = re.subn(
+              r'(<span class="footer-version"[^>]*>).*?(</span>)',
+              lambda match: f"{match.group(1)}{version}{match.group(2)}",
+              html,
+              count=1,
+          )
+          if replacements != 1:
+              raise SystemExit("Could not find the footer version marker in index.html")
+          index.write_text(html, encoding="utf-8")
+          PY
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
