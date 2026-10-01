@@ -768,6 +768,13 @@ body {
     color: #409cff;
 }
 
+.footer-version {
+    color: var(--text-dimmer);
+    font-size: 0.75em;
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+}
+
 @media (max-width: 1024px) {
     .video-grid {
         grid-template-columns: repeat(2, 1fr);
