@@ -717,6 +717,22 @@ document.addEventListener('DOMContentLoaded', () => {
             mainLink.href = visible[0].href || '#';
             const label = mainLink.querySelector('[data-i18n="telegram"]');
             if (label) label.textContent = visible[0].label?.[lang] || visible[0].label || visible[0].href || 'Link';
+            const telegramIcon = mainLink.querySelector('.contact-btn-icon');
+            let customIcon = mainLink.querySelector('.custom-button-icon');
+            if (visible[0].iconUrl && label) {
+                if (!customIcon) {
+                    customIcon = document.createElement('img');
+                    customIcon.className = 'custom-button-icon';
+                    customIcon.alt = '';
+                    customIcon.loading = 'lazy';
+                    label.before(customIcon);
+                }
+                customIcon.src = visible[0].iconUrl;
+                if (telegramIcon) telegramIcon.hidden = true;
+            } else {
+                customIcon?.remove();
+                if (telegramIcon) telegramIcon.hidden = false;
+            }
         }
         if (!extraLinks) return;
         extraLinks.replaceChildren();
@@ -758,9 +774,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const text = content.texts[lang];
             if (!text) return;
             Object.assign(translations[lang], {
-                name: text.name, role: text.role, introDescription: text.description,
-                workedWith: text.workedWith, skills: text.skills,
-                motion: text.motion, modeling: text.modeling,
+                pageTitle: text.pageTitle ?? translations[lang].pageTitle,
+                name: text.name ?? translations[lang].name,
+                role: text.role ?? translations[lang].role,
+                introDescription: text.description ?? translations[lang].introDescription,
+                workedWith: text.workedWith ?? translations[lang].workedWith,
+                skills: text.skills ?? translations[lang].skills,
+                motion: text.motion ?? translations[lang].motion,
+                modeling: text.modeling ?? translations[lang].modeling,
             });
             const firstLink = content.links?.find(link => link.visible !== false);
             if (firstLink) translations[lang].telegram = firstLink.label?.[lang] || firstLink.label || translations[lang].telegram;

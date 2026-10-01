@@ -1078,6 +1078,13 @@ body {
     vertical-align: middle;
 }
 
+.custom-button-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    flex: 0 0 auto;
+}
+
 .custom-link-mark {
     display: inline-flex;
     width: 18px;

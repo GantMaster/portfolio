@@ -17,7 +17,7 @@
         <section class="auth-panel" id="loginPanel">
             <p class="eyebrow">PRIVATE AREA</p>
             <h1>Вход в админку</h1>
-            <p class="muted">Войдите с аккаунтом, созданным в Firebase Authentication.</p>
+            <p class="muted">Войдите с аккаунтом администратора Firebase.</p>
             <form id="loginForm">
                 <label>Email<input name="email" type="email" autocomplete="username" required></label>
                 <label>Пароль<input name="password" type="password" autocomplete="current-password" required></label>
@@ -28,18 +28,32 @@
 
         <section class="editor-panel" id="editorPanel" hidden>
             <div class="editor-heading">
-                <div><p class="eyebrow">CONTENT</p><h1>Контент портфолио</h1><p class="muted" id="userLabel"></p></div>
+                <div>
+                    <p class="eyebrow">CONTENT</p>
+                    <h1>Контент портфолио</h1>
+                    <p class="muted" id="userLabel"></p>
+                </div>
                 <button class="quiet-button" id="logoutButton" type="button">Выйти</button>
             </div>
-            <div class="editor-note"><strong>Редактор данных</strong><span>Контент хранится в одном документе Firestore. Массивы сохраняют порядок элементов: перетасуйте их здесь, чтобы изменить порядок карточек, навыков и компаний.</span></div>
-            <label class="json-label" for="contentEditor">Структура сайта (JSON)</label>
-            <textarea id="contentEditor" spellcheck="false" autocapitalize="off"></textarea>
-            <div class="editor-actions">
-                <button class="primary-button" id="saveButton" type="button">Сохранить изменения</button>
-                <button class="quiet-button" id="reloadButton" type="button">Загрузить из базы</button>
-                <span class="notice" id="saveMessage" role="status"></span>
+
+            <div class="editor-toolbar">
+                <span class="editor-help">Сохраните изменения, затем обновите страницу портфолио, чтобы увидеть результат.</span>
+                <div class="toolbar-actions">
+                    <button class="quiet-button" id="reloadButton" type="button">Обновить</button>
+                    <button class="primary-button" id="saveButton" type="button">Сохранить</button>
+                </div>
             </div>
-            <details class="schema-help"><summary>Какие разделы можно редактировать</summary><p><code>texts</code> — RU/EN тексты; <code>companies</code> и <code>skills</code> — подписи, цвет и иконки; <code>projects</code> — адрес медиафайла, вкладка (<code>motion</code>/<code>modeling</code>), порядок и видимость; <code>links</code> — подписи и кнопки.</p><p>Для собственного изображения-иконки у компании добавьте поле <code>iconUrl</code>. Пока файлы остаются по текущим URL; загрузку в R2 подключим после настройки бакета.</p></details>
+            <p class="notice save-notice" id="saveMessage" role="status" aria-live="polite"></p>
+
+            <nav class="editor-tabs" aria-label="Разделы редактора">
+                <button type="button" class="editor-tab active" data-section="texts">Тексты и информация</button>
+                <button type="button" class="editor-tab" data-section="projects">Проекты</button>
+                <button type="button" class="editor-tab" data-section="companies">Компании</button>
+                <button type="button" class="editor-tab" data-section="skills">Навыки</button>
+                <button type="button" class="editor-tab" data-section="links">Кнопки и ссылки</button>
+            </nav>
+
+            <div id="editorContent" class="editor-content"></div>
         </section>
     </main>
     <script type="module" src="admin.js"></script>

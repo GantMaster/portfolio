@@ -1,6 +1,7 @@
 export const portfolioDefaults = {
     texts: {
         ru: {
+            pageTitle: "Портфолио — Максим Аскеров",
             name: "Максим Аскеров",
             role: "3D Motion Designer · 4+ года опыта",
             description: "Ролики и креативы для игр, приложений и брендов, 3D-моделирование и анимация.",
@@ -10,6 +11,7 @@ export const portfolioDefaults = {
             modeling: "Моделирование",
         },
         en: {
+            pageTitle: "Portfolio — Maxim Askerov",
             name: "Maxim Askerov",
             role: "3D Motion Designer · 4+ years of experience",
             description: "Videos and creatives for games, apps and brands, 3D modeling and animation.",
