@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0b0b10">
+    <title>Управление портфолио — GantMaster</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <main class="admin-shell">
+        <header class="admin-topbar">
+            <a class="admin-brand" href="../"><span>GantMaster</span><small>Portfolio CMS</small></a>
+            <a class="back-link" href="../">← На сайт</a>
+        </header>
+
+        <section class="auth-panel" id="loginPanel">
+            <p class="eyebrow">PRIVATE AREA</p>
+            <h1>Вход в админку</h1>
+            <p class="muted">Войдите с аккаунтом, созданным в Firebase Authentication.</p>
+            <form id="loginForm">
+                <label>Email<input name="email" type="email" autocomplete="username" required></label>
+                <label>Пароль<input name="password" type="password" autocomplete="current-password" required></label>
+                <button class="primary-button" type="submit">Войти</button>
+            </form>
+            <p class="notice" id="loginMessage" role="status"></p>
+        </section>
+
+        <section class="editor-panel" id="editorPanel" hidden>
+            <div class="editor-heading">
+                <div><p class="eyebrow">CONTENT</p><h1>Контент портфолио</h1><p class="muted" id="userLabel"></p></div>
+                <button class="quiet-button" id="logoutButton" type="button">Выйти</button>
+            </div>
+            <div class="editor-note"><strong>Редактор данных</strong><span>Контент хранится в одном документе Firestore. Массивы сохраняют порядок элементов: перетасуйте их здесь, чтобы изменить порядок карточек, навыков и компаний.</span></div>
+            <label class="json-label" for="contentEditor">Структура сайта (JSON)</label>
+            <textarea id="contentEditor" spellcheck="false" autocapitalize="off"></textarea>
+            <div class="editor-actions">
+                <button class="primary-button" id="saveButton" type="button">Сохранить изменения</button>
+                <button class="quiet-button" id="reloadButton" type="button">Загрузить из базы</button>
+                <span class="notice" id="saveMessage" role="status"></span>
+            </div>
+            <details class="schema-help"><summary>Какие разделы можно редактировать</summary><p><code>texts</code> — RU/EN тексты; <code>companies</code> и <code>skills</code> — подписи, цвет и иконки; <code>projects</code> — адрес медиафайла, вкладка (<code>motion</code>/<code>modeling</code>), порядок и видимость; <code>links</code> — подписи и кнопки.</p><p>Для собственного изображения-иконки у компании добавьте поле <code>iconUrl</code>. Пока файлы остаются по текущим URL; загрузку в R2 подключим после настройки бакета.</p></details>
+        </section>
+    </main>
+    <script type="module" src="admin.js"></script>
+</body>
+</html>

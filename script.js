@@ -379,30 +379,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // =========================
 
-    const motionFiles = [
-        '15.mp4', '5.mp4',
-        '8.mp4',
-        '17.mp4','3.mp4', '18.mp4',
-        '7.mp4',
-        '16.mp4','6.mp4','9.mp4','2.mp4','1.mp4','4.mp4',
-        '10.mp4','3.jpg','4.jpg','1.jpg',
+    let motionFiles = [
+        'assets/videos/15.mp4', 'assets/videos/5.mp4',
+        'assets/videos/8.mp4',
+        'assets/videos/17.mp4','assets/videos/3.mp4', 'assets/videos/18.mp4',
+        'assets/videos/7.mp4',
+        'assets/videos/16.mp4','assets/videos/6.mp4','assets/videos/9.mp4','assets/videos/2.mp4','assets/videos/1.mp4','assets/videos/4.mp4',
+        'assets/videos/10.mp4','assets/images/3.jpg','assets/images/4.jpg','assets/images/1.jpg',
     ];
 
-    const modelingFiles = [
-        'modeling/chest.jpg',
-        'modeling/cherep.jpg',
-        'modeling/budka.jpg',
-        'modeling/zhuk.jpg',
-        'modeling/starik.jpg',
-        'modeling/tykva2.jpg',
-        'modeling/lampa.jpg',
-        'modeling/avatar.jpg',
-        'modeling/Robot.jpg',
-        'modeling/maska.mp4',
-        'modeling/koza.jpg',
-        'modeling/twitch.jpg',
-        'modeling/zhabka.jpg',
-        'modeling/malchik.jpg',
+    let modelingFiles = [
+        'assets/images/modeling/chest.jpg',
+        'assets/images/modeling/cherep.jpg',
+        'assets/images/modeling/budka.jpg',
+        'assets/images/modeling/zhuk.jpg',
+        'assets/images/modeling/starik.jpg',
+        'assets/images/modeling/tykva2.jpg',
+        'assets/images/modeling/lampa.jpg',
+        'assets/images/modeling/avatar.jpg',
+        'assets/images/modeling/Robot.jpg',
+        'assets/videos/modeling/maska.mp4',
+        'assets/images/modeling/koza.jpg',
+        'assets/images/modeling/twitch.jpg',
+        'assets/images/modeling/zhabka.jpg',
+        'assets/images/modeling/malchik.jpg',
     ];
 
     const videoGrid = document.getElementById('videoGrid');
@@ -663,6 +663,130 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tab === 'motion') createMediaItems(motionFiles, false);
         if (tab === 'modeling') createMediaItems(modelingFiles, true);
     }
+
+    function renderMetaItems(container, items, type, lang) {
+        if (!container) return;
+        container.replaceChildren();
+        items.filter(item => item.visible !== false).forEach(item => {
+            const chip = document.createElement('span');
+            chip.className = type === 'company' ? 'company-chip' : 'skill-dot-tag';
+            if (type === 'company') {
+                const logo = document.createElement('span');
+                logo.className = 'company-chip-logo';
+                logo.style.backgroundColor = item.color || '#5962a4';
+                if (item.textColor) logo.style.color = item.textColor;
+                if (item.iconUrl) {
+                    const icon = document.createElement('img');
+                    icon.src = item.iconUrl;
+                    icon.alt = '';
+                    icon.loading = 'lazy';
+                    logo.replaceChildren(icon);
+                } else logo.textContent = item.mark || item.name || '?';
+                chip.append(logo, document.createTextNode(item.names?.[lang] || item.name || ''));
+            } else {
+                const dot = document.createElement('span');
+                dot.className = 'skill-dot';
+                dot.style.backgroundColor = item.color || '#858ce8';
+                if (item.iconUrl) {
+                    const icon = document.createElement('img');
+                    icon.src = item.iconUrl;
+                    icon.alt = '';
+                    icon.loading = 'lazy';
+                    dot.replaceChildren(icon);
+                }
+                chip.append(dot, document.createTextNode(item.names?.[lang] || item.name || ''));
+            }
+            container.appendChild(chip);
+        });
+    }
+
+    function renderCustomLinks(links, lang) {
+        const mainLink = document.querySelector('.header-actions > .contact-btn');
+        const footerLink = document.querySelector('.footer-link');
+        const extraLinks = document.getElementById('custom-links');
+        const visible = links.filter(link => link.visible !== false);
+        if (mainLink) mainLink.hidden = visible.length === 0;
+        if (footerLink) {
+            footerLink.hidden = visible.length === 0;
+            if (visible[0]) {
+                footerLink.href = visible[0].href || '#';
+                footerLink.textContent = visible[0].label?.[lang] || visible[0].label || visible[0].href || 'Link';
+            }
+        }
+        if (mainLink && visible[0]) {
+            mainLink.href = visible[0].href || '#';
+            const label = mainLink.querySelector('[data-i18n="telegram"]');
+            if (label) label.textContent = visible[0].label?.[lang] || visible[0].label || visible[0].href || 'Link';
+        }
+        if (!extraLinks) return;
+        extraLinks.replaceChildren();
+        visible.slice(1).forEach(link => {
+            const anchor = document.createElement('a');
+            anchor.className = 'contact-btn custom-contact-btn';
+            anchor.href = link.href || '#';
+            anchor.target = '_blank';
+            anchor.rel = 'noopener noreferrer';
+            const label = link.label?.[lang] || link.label || link.href || 'Link';
+            anchor.setAttribute('aria-label', label);
+            anchor.title = label;
+            if (link.iconUrl) {
+                const icon = document.createElement('img');
+                icon.src = link.iconUrl;
+                icon.alt = '';
+                icon.loading = 'lazy';
+                anchor.prepend(icon);
+            } else {
+                const mark = document.createElement('span');
+                mark.className = 'custom-link-mark';
+                mark.setAttribute('aria-hidden', 'true');
+                mark.textContent = '↗';
+                anchor.appendChild(mark);
+            }
+            const text = document.createElement('span');
+            text.className = 'custom-link-label';
+            text.textContent = label;
+            anchor.appendChild(text);
+            extraLinks.appendChild(anchor);
+        });
+    }
+
+    document.addEventListener('portfolio:content', event => {
+        const content = event.detail;
+        if (!content || !content.texts || !Array.isArray(content.projects)) return;
+        window.__portfolioContent = content;
+        ['ru', 'en'].forEach(lang => {
+            const text = content.texts[lang];
+            if (!text) return;
+            Object.assign(translations[lang], {
+                name: text.name, role: text.role, introDescription: text.description,
+                workedWith: text.workedWith, skills: text.skills,
+                motion: text.motion, modeling: text.modeling,
+            });
+            const firstLink = content.links?.find(link => link.visible !== false);
+            if (firstLink) translations[lang].telegram = firstLink.label?.[lang] || firstLink.label || translations[lang].telegram;
+        });
+        if (Array.isArray(content.companies)) renderMetaItems(document.querySelector('.company-row'), content.companies, 'company', currentLang);
+        if (Array.isArray(content.skills)) renderMetaItems(document.querySelector('.skill-row'), content.skills, 'skill', currentLang);
+        const projects = content.projects.filter(project => project.visible !== false)
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
+        motionFiles = projects.filter(project => project.tab === 'motion').map(project => project.src);
+        modelingFiles = projects.filter(project => project.tab === 'modeling').map(project => project.src);
+        applyLanguage(currentLang);
+        if (Array.isArray(content.links)) renderCustomLinks(content.links, currentLang);
+        switchTab(currentTab);
+    });
+
+    if (window.__loadedPortfolioContent) {
+        document.dispatchEvent(new CustomEvent('portfolio:content', { detail: window.__loadedPortfolioContent }));
+    }
+
+    document.addEventListener('portfolio:language', event => {
+        const content = window.__portfolioContent;
+        if (!content) return;
+        if (Array.isArray(content.companies)) renderMetaItems(document.querySelector('.company-row'), content.companies, 'company', event.detail);
+        if (Array.isArray(content.skills)) renderMetaItems(document.querySelector('.skill-row'), content.skills, 'skill', event.detail);
+        if (Array.isArray(content.links)) renderCustomLinks(content.links, event.detail);
+    });
 
     document.querySelectorAll('.tab-button').forEach(btn => {
         btn.addEventListener('click', e => {

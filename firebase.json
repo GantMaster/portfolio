@@ -1,0 +1,27 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "firestore.rules",
+      "FIREBASE_SETUP.md",
+      "skills-lock.json",
+      "_redirects",
+      "debug.log",
+      "**/.*",
+      "**/node_modules/**",
+      "**/firebase-debug.log"
+    ],
+    "cleanUrls": true,
+    "redirects": [
+      {
+        "source": "/login",
+        "destination": "/login/",
+        "type": 301
+      }
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}
