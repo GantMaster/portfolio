@@ -121,13 +121,22 @@ function sortedProjects(tab) {
         .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
 }
 
+function resolveMediaUrl(src) {
+    const videoPath = "assets/videos/";
+    if (src.startsWith(videoPath)) {
+        const filePath = src.slice(videoPath.length).split("/").map(encodeURIComponent).join("/");
+        return `https://raw.githubusercontent.com/GantMaster/portfolio/feature/portfolio-refresh/${videoPath}${filePath}`;
+    }
+    return src.startsWith("assets/") ? `../${src}` : src;
+}
+
 function renderProject(project, tab, position, length) {
     const key = project.id;
     const index = content.projects.indexOf(project);
     const src = String(project.src || "");
     const fileName = src.split("/").pop();
     const local = src.startsWith("assets/");
-    const previewSrc = local ? `../${src}` : src;
+    const previewSrc = resolveMediaUrl(src);
     const isVideo = /\.(mp4|webm|mov|avi|mkv)(\?.*)?$/i.test(src);
     const preview = isVideo
         ? `<video src="${escapeHtml(previewSrc)}" muted loop playsinline preload="none"></video>`

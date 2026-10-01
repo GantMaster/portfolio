@@ -426,6 +426,15 @@ document.addEventListener('DOMContentLoaded', () => {
             .some(ext => filename.toLowerCase().endsWith(ext));
     }
 
+    function resolveMediaUrl(filename) {
+        const videoPath = 'assets/videos/';
+        if (filename.startsWith(videoPath)) {
+            const filePath = filename.slice(videoPath.length).split('/').map(encodeURIComponent).join('/');
+            return `https://raw.githubusercontent.com/GantMaster/portfolio/feature/portfolio-refresh/${videoPath}${filePath}`;
+        }
+        return new URL(filename, SITE_BASE).href;
+    }
+
     function isImageFile(filename) {
         return ['.png','.jpg','.jpeg','.gif','.webp','.svg']
             .some(ext => filename.toLowerCase().endsWith(ext));
@@ -470,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // ---------- VIDEO ----------
             if (isVideoFile(mediaFile)) {
                 const video = document.createElement('video');
-                video.src = new URL(mediaFile, SITE_BASE).href;
+                video.src = resolveMediaUrl(mediaFile);
                 video.muted = true;
                 video.loop = true;
                 video.playsInline = true;

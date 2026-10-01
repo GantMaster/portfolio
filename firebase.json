@@ -8,6 +8,7 @@
       "skills-lock.json",
       "_redirects",
       "debug.log",
+      "assets/videos/**",
       "**/.*",
       "**/node_modules/**",
       "**/firebase-debug.log"
