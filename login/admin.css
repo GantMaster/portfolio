@@ -108,7 +108,10 @@ h3 { margin-bottom: 0; font-size: 16px; }
 .row-edit-fields .field input, .row-edit-fields .field select { padding: 8px 10px; }
 .project-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: start; }
 .project-row { display: flex; min-height: 0; flex-direction: column; align-items: stretch; gap: 9px; padding: 10px; transition: border-color .15s, background .15s, opacity .15s; }
-.project-row:hover, .project-row.drop-target { border-color: #676da8; background: #20202b; }
+.project-row:hover { border-color: #676da8; background: #20202b; }
+.project-row.drop-before::before, .project-row.drop-after::after { position: absolute; z-index: 2; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: #969cf5; content: ""; pointer-events: none; }
+.project-row.drop-before::before { left: -7px; }
+.project-row.drop-after::after { right: -7px; }
 .project-row.is-dragging { opacity: .42; }
 .project-row.is-hidden .row-title, .project-row.is-hidden .project-thumb { opacity: .45; }
 .drag-grip { position: absolute; z-index: 1; top: 15px; left: 15px; display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid #ffffff30; border-radius: 8px; background: #09090dcc; color: #fff; cursor: grab; user-select: none; }

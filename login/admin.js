@@ -412,23 +412,27 @@ editorContent.addEventListener("dragover", event => {
     const row = event.target.closest(".project-row");
     if (!row || row.dataset.projectId === draggedProjectId) return;
     event.preventDefault();
-    row.classList.add("drop-target");
+    const after = event.clientX >= row.getBoundingClientRect().left + row.getBoundingClientRect().width / 2;
+    row.classList.toggle("drop-before", !after);
+    row.classList.toggle("drop-after", after);
 });
-editorContent.addEventListener("dragleave", event => event.target.closest(".project-row")?.classList.remove("drop-target"));
+editorContent.addEventListener("dragleave", event => event.target.closest(".project-row")?.classList.remove("drop-before", "drop-after"));
 editorContent.addEventListener("drop", event => {
     const targetRow = event.target.closest(".project-row");
     if (!targetRow || !draggedProjectId) return;
     event.preventDefault();
     const dragged = content.projects.find(item => item.id === draggedProjectId);
     const target = content.projects.find(item => item.id === targetRow.dataset.projectId);
-    if (!dragged || !target) return;
+    if (!dragged || !target || dragged === target) return;
     const previousTab = dragged.tab;
     const group = sortedProjects(target.tab);
     const oldIndex = group.indexOf(dragged);
     if (oldIndex >= 0) group.splice(oldIndex, 1);
     const targetIndex = group.indexOf(target);
+    const targetRect = targetRow.getBoundingClientRect();
+    const insertAfter = event.clientX >= targetRect.left + targetRect.width / 2;
     dragged.tab = target.tab;
-    group.splice(targetIndex, 0, dragged);
+    group.splice(targetIndex + Number(insertAfter), 0, dragged);
     group.forEach((item, order) => { item.order = order; });
     if (previousTab !== target.tab) sortedProjects(previousTab).forEach((item, order) => { item.order = order; });
     draggedProjectId = "";
@@ -437,7 +441,7 @@ editorContent.addEventListener("drop", event => {
 });
 editorContent.addEventListener("dragend", () => {
     draggedProjectId = "";
-    editorContent.querySelectorAll(".is-dragging, .drop-target").forEach(row => row.classList.remove("is-dragging", "drop-target"));
+    editorContent.querySelectorAll(".is-dragging, .drop-before, .drop-after").forEach(row => row.classList.remove("is-dragging", "drop-before", "drop-after"));
 });
 
 editorContent.addEventListener("input", event => {
