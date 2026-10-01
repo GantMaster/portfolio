@@ -1,10 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Запоминаем реальный адрес страницы ДО того, как переключение языка
-    // подменит его в адресной строке на /en/ или /ru/ — иначе все
-    // относительные пути к видео/картинкам (они добавляются в DOM позже)
-    // начнут резолвиться от несуществующей папки /en/ и ломаться.
-    const SITE_BASE = document.baseURI;
+    // Resolve assets from the site root on both /ru/ and /en/ routes.
+    const SITE_BASE = new URL('/', location.origin).href;
 
     const LANG_KEY = 'site_lang';
     const translations = {
@@ -25,8 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const urlLang = new URLSearchParams(location.search).get('lang');
+    const pathLang = location.pathname.match(/^\/(en|ru)(?:\/|$)/)?.[1];
     let currentLang = translations[urlLang]
         ? urlLang
+        : translations[pathLang]
+            ? pathLang
         : (translations[localStorage.getItem(LANG_KEY)] ? localStorage.getItem(LANG_KEY) : 'ru');
     const languageMenu = document.querySelector('.language-menu');
     const languageCurrent = document.querySelector('.language-current');
@@ -35,9 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hoverLanguageMenu = window.matchMedia('(hover: hover) and (pointer: fine)');
     let languageCloseTimer = 0;
 
-    // Если попали сюда через редирект-заглушку /en/ или /ru/ (там урл на
-    // мгновение превращается в index.html?lang=en) — сразу же приводим
-    // адресную строку обратно к красивому /en/, без ?lang=.
+    // Старые ссылки с ?lang= сохраняем как чистые языковые URL.
     if (urlLang === 'en' || urlLang === 'ru') {
         updateUrlForLang(urlLang);
     }
@@ -69,9 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Переводит адресную строку в /en/ или /ru/, чтобы ссылку можно было
-    // сразу скопировать и отправить — работает только на главной странице,
-    // т.к. только для неё заведены редирект-заглушки /en/ и /ru/.
+    // Переводит адресную строку в /en/ или /ru/.
     function updateUrlForLang(lang) {
         try {
             let path = location.pathname.replace(/\/(en|ru)\/?$/, '/').replace(/index\.html$/, '');
@@ -408,6 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const videoGrid = document.getElementById('videoGrid');
     let currentTab = 'motion';
     let activeVideo = null;
+    let portfolioContentReady = false;
 
     const yearEl = document.getElementById('year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
@@ -425,6 +422,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return ['.mp4','.webm','.mov','.avi','.mkv']
             .some(ext => filename.toLowerCase().endsWith(ext));
     }
+
+    function loadVideo(video) {
+        if (video.hasAttribute('src') || !video.dataset.mediaSrc) return;
+        video.src = video.dataset.mediaSrc;
+        video.preload = 'metadata';
+    }
+
+    const videoObserver = 'IntersectionObserver' in window
+        ? new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                loadVideo(entry.target);
+                videoObserver.unobserve(entry.target);
+            });
+        }, { rootMargin: '250px 0px' })
+        : null;
 
     function resolveMediaUrl(filename) {
         const videoPath = 'assets/videos/';
@@ -460,7 +473,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================
 
     function createMediaItems(files, isSquare = false) {
-        videoGrid.innerHTML = '';
+        videoGrid.querySelectorAll('video').forEach(video => {
+            video.pause();
+            videoObserver?.unobserve(video);
+            video.removeAttribute('src');
+            video.load();
+        });
+        videoGrid.replaceChildren();
         videoGrid.classList.toggle('square-grid', isSquare);
         activeVideo = null;
 
@@ -479,11 +498,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // ---------- VIDEO ----------
             if (isVideoFile(mediaFile)) {
                 const video = document.createElement('video');
-                video.src = resolveMediaUrl(mediaFile);
+                video.dataset.mediaSrc = resolveMediaUrl(mediaFile);
                 video.muted = true;
                 video.loop = true;
                 video.playsInline = true;
-                video.preload = 'metadata';
+                video.preload = 'none';
                 video.controls = false;
                 video.controlsList = 'nodownload nofullscreen noremoteplayback';
                 video.disablePictureInPicture = true;
@@ -568,6 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // ---------- PLAY/PAUSE + Z-INDEX + FINAL FIX ----------
                 function togglePlay() {
                     if (video.paused) {
+                        loadVideo(video);
                         pauseOtherVideos(video);
                         video.play().then(() => {
                             hasPlayed = true;
@@ -618,6 +638,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     // если hasPlayed = true, оставляем последний кадр и не показываем превью
                 });
 
+                if (videoObserver) videoObserver.observe(video);
+                else loadVideo(video);
+
                 mediaItem.append(thumbnail, video);
                 if (playIcon) mediaItem.appendChild(playIcon);
             }
@@ -625,7 +648,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // ---------- IMAGE ----------
             else if (isImageFile(mediaFile)) {
                 const img = document.createElement('img');
-                img.src = new URL(mediaFile, SITE_BASE).href;
+                img.src = resolveMediaUrl(mediaFile);
                 img.alt = mediaFile;
 
                 img.style.cssText = isSquare
@@ -668,6 +691,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === tab);
         });
+
+        if (!portfolioContentReady) {
+            videoGrid.replaceChildren();
+            return;
+        }
 
         if (tab === 'motion') createMediaItems(motionFiles, false);
         if (tab === 'modeling') createMediaItems(modelingFiles, true);
@@ -801,6 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .sort((a, b) => (a.order || 0) - (b.order || 0));
         motionFiles = projects.filter(project => project.tab === 'motion').map(project => project.src);
         modelingFiles = projects.filter(project => project.tab === 'modeling').map(project => project.src);
+        portfolioContentReady = true;
         applyLanguage(currentLang);
         if (Array.isArray(content.links)) renderCustomLinks(content.links, currentLang);
         switchTab(currentTab);
@@ -832,7 +861,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('hashchange', () => switchTab(getTabFromHash()));
 
-    switchTab(getTabFromHash());
+    currentTab = getTabFromHash();
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === currentTab);
+    });
 
     // =========================
     // MODAL
@@ -842,7 +874,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageModalImg = document.getElementById('imageModalImg');
 
     function openImageModal(src) {
-        imageModalImg.src = new URL(src, SITE_BASE).href;
+        imageModalImg.src = resolveMediaUrl(src);
         imageModal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
