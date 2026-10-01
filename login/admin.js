@@ -25,9 +25,14 @@ const textFields = [
 ];
 
 let content = normalizeContent(portfolioDefaults);
-let activeSection = "texts";
+let activeSection = "meta";
+let activeCollection = "texts";
 let documentExists = false;
 let dirty = false;
+let mediaManifest = [];
+let manifestStatus = "";
+let draggedProjectId = "";
+let manifestChanged = false;
 
 function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -102,11 +107,11 @@ function renderTexts() {
             </section>`).join("")}</div>`;
 }
 
-function moveButtons(kind, key, position, length) {
+function moveButtons(kind, key, position, length, removable = true) {
     return `<div class="item-controls">
         <button class="icon-button" type="button" data-action="move" data-kind="${kind}" data-key="${escapeHtml(key)}" data-direction="-1" aria-label="Переместить выше" ${position === 0 ? "disabled" : ""}>↑</button>
         <button class="icon-button" type="button" data-action="move" data-kind="${kind}" data-key="${escapeHtml(key)}" data-direction="1" aria-label="Переместить ниже" ${position === length - 1 ? "disabled" : ""}>↓</button>
-        <button class="icon-button danger-button" type="button" data-action="remove" data-kind="${kind}" data-key="${escapeHtml(key)}" aria-label="Удалить">×</button>
+        ${removable ? `<button class="icon-button danger-button" type="button" data-action="remove" data-kind="${kind}" data-key="${escapeHtml(key)}" aria-label="Удалить">×</button>` : ""}
     </div>`;
 }
 
@@ -118,73 +123,78 @@ function sortedProjects(tab) {
 
 function renderProject(project, tab, position, length) {
     const key = project.id;
-    return `<article class="content-card item-card">
-        <div class="item-card-heading"><div><span class="item-kicker">${escapeHtml(project.id || "Новый проект")}</span><h3>Проект ${position + 1}</h3></div>${moveButtons("projects", key, position, length)}</div>
-        <div class="field-grid">
-            ${field("Ссылка или путь к медиафайлу", `projects.${content.projects.indexOf(project)}.src`, project.src, { wide: true, placeholder: "assets/videos/example.mp4 или https://…" })}
-            <label class="field"><span>Вкладка</span><select data-path="projects.${content.projects.indexOf(project)}.tab"><option value="motion" ${tab === "motion" ? "selected" : ""}>Моушн-дизайн</option><option value="modeling" ${tab === "modeling" ? "selected" : ""}>Моделинг</option></select></label>
-            ${field("Показывать на сайте", `projects.${content.projects.indexOf(project)}.visible`, project.visible, { type: "checkbox" })}
-        </div>
+    const index = content.projects.indexOf(project);
+    const src = String(project.src || "");
+    const fileName = src.split("/").pop();
+    const local = src.startsWith("assets/");
+    const previewSrc = local ? `../${src}` : src;
+    const isVideo = /\.(mp4|webm|mov|avi|mkv)(\?.*)?$/i.test(src);
+    const preview = isVideo
+        ? `<video src="${escapeHtml(previewSrc)}" muted playsinline preload="none"></video>`
+        : `<img src="${escapeHtml(previewSrc)}" alt="" loading="lazy">`;
+    return `<article class="compact-row project-row${project.visible === false ? " is-hidden" : ""}" data-project-id="${escapeHtml(key)}" draggable="true">
+        <span class="drag-grip" aria-hidden="true">⠿</span><span class="project-thumb">${preview}</span>
+        <span class="row-order">${position + 1}</span>
+        <div class="row-title"><strong>${escapeHtml(fileName || "Новый проект")}</strong><small>${escapeHtml(src || "Путь к файлу не задан")}</small></div>
+        <label class="sr-only" for="project-order-${escapeHtml(key)}">Порядок</label><input class="order-input" id="project-order-${escapeHtml(key)}" type="number" min="1" value="${position + 1}" data-project-order="${escapeHtml(key)}">
+        <label class="sr-only" for="project-tab-${escapeHtml(key)}">Вкладка</label><select class="row-select" id="project-tab-${escapeHtml(key)}" data-path="projects.${index}.tab"><option value="motion" ${tab === "motion" ? "selected" : ""}>Креативы</option><option value="modeling" ${tab === "modeling" ? "selected" : ""}>Моделинг</option></select>
+        <label class="row-visible" title="Показывать на сайте"><input type="checkbox" data-path="projects.${index}.visible" ${project.visible !== false ? "checked" : ""}><span>Сайт</span></label>
+        ${moveButtons("projects", key, position, length, !local)}
+        <details class="row-edit"><summary>Изменить</summary><div class="row-edit-fields">${field("Путь или URL", `projects.${index}.src`, src, { wide: true, placeholder: "assets/videos/example.mp4 или https://…" })}</div></details>
     </article>`;
 }
 
 function renderProjects() {
     const groups = [["motion", "Моушн-дизайн и креативы"], ["modeling", "3D-моделинг"]];
-    return `${sectionHeading("Проекты", "Добавляйте путь/URL медиа, выбирайте вкладку и меняйте порядок карточек.", "проект")}
-        <p class="section-hint">Для локальных файлов используйте путь относительно сайта, например <code>assets/videos/15.mp4</code>. Файл должен уже быть в репозитории или доступен по URL.</p>
+    return `${sectionHeading("Контент портфолио", "Перетаскивайте строки или задавайте номер; новые файлы из Git добавляются скрытыми.", "проект")}
+        <p class="section-hint">${escapeHtml(manifestStatus || "Каталог файлов появится после сборки сайта.")} · <code>assets/videos/</code></p>
         ${groups.map(([tab, title]) => {
             const projects = sortedProjects(tab);
-            return `<section class="collection-group"><h3>${title}<span>${projects.length}</span></h3>${projects.length ? projects.map((project, index) => renderProject(project, tab, index, projects.length)).join("") : '<p class="empty-state">В этой вкладке пока нет проектов.</p>'}</section>`;
+            return `<section class="collection-group"><h3>${title}<span>${projects.length}</span></h3><div class="compact-list" data-project-list="${tab}">${projects.length ? projects.map((project, index) => renderProject(project, tab, index, projects.length)).join("") : '<p class="empty-state">В этой вкладке пока нет проектов.</p>'}</div></section>`;
         }).join("")}`;
 }
 
 function renderCompanies() {
     return `${sectionHeading("Компании", "Управляйте названиями, порядком, цветами и собственными иконками.", "компанию")}
-        <div class="collection-list">${content.companies.map((item, index) => `<article class="content-card item-card">
-            <div class="item-card-heading"><div><span class="item-kicker">Компания ${index + 1}</span><h3>${escapeHtml(item.names?.ru || item.names?.en || "Без названия")}</h3></div>${moveButtons("companies", index, index, content.companies.length)}</div>
-            <div class="field-grid">
+        <div class="compact-list">${content.companies.map((item, index) => `<details class="compact-row"><summary class="compact-summary"><span class="row-order">${index + 1}</span><span class="row-title"><strong>${escapeHtml(item.names?.ru || item.names?.en || "Без названия")}</strong><small>${escapeHtml(item.mark || "Компания")}</small></span>${moveButtons("companies", index, index, content.companies.length)}</summary><div class="row-edit-fields"><div class="field-grid">
                 ${localizedFields(`companies.${index}.names`, item.names || { ru: item.name || "", en: item.name || "" }, { ru: "Название", en: "Name" })}
                 ${field("Короткая метка", `companies.${index}.mark`, item.mark || "", { placeholder: "Например, CG" })}
                 ${field("Цвет фона", `companies.${index}.color`, item.color || "#5962a4", { type: "color" })}
                 ${field("Цвет метки", `companies.${index}.textColor`, item.textColor || "#ffffff", { type: "color" })}
                 ${field("URL иконки (необязательно)", `companies.${index}.iconUrl`, item.iconUrl || "", { wide: true, placeholder: "assets/images/company.png или https://…" })}
                 ${field("Показывать на сайте", `companies.${index}.visible`, item.visible, { type: "checkbox" })}
-            </div>
-        </article>`).join("") || '<p class="empty-state">Компаний пока нет.</p>'}</div>`;
+            </div></div></details>`).join("") || '<p class="empty-state">Компаний пока нет.</p>'}</div>`;
 }
 
 function renderSkills() {
     return `${sectionHeading("Навыки", "Можно менять названия для обоих языков, порядок, цвет и иконку.", "навык")}
-        <div class="collection-list">${content.skills.map((item, index) => `<article class="content-card item-card">
-            <div class="item-card-heading"><div><span class="item-kicker">Навык ${index + 1}</span><h3>${escapeHtml(item.names?.ru || item.names?.en || item.name || "Без названия")}</h3></div>${moveButtons("skills", index, index, content.skills.length)}</div>
-            <div class="field-grid">
+        <div class="compact-list">${content.skills.map((item, index) => `<details class="compact-row"><summary class="compact-summary"><span class="row-order">${index + 1}</span><span class="row-title"><strong>${escapeHtml(item.names?.ru || item.names?.en || item.name || "Без названия")}</strong><small>Навык</small></span>${moveButtons("skills", index, index, content.skills.length)}</summary><div class="row-edit-fields"><div class="field-grid">
                 ${localizedFields(`skills.${index}.names`, item.names || { ru: item.name || "", en: item.name || "" }, { ru: "Название", en: "Name" })}
                 ${field("Цвет", `skills.${index}.color`, item.color || "#858ce8", { type: "color" })}
                 ${field("URL иконки (необязательно)", `skills.${index}.iconUrl`, item.iconUrl || "", { wide: true, placeholder: "assets/images/icon.png или https://…" })}
                 ${field("Показывать на сайте", `skills.${index}.visible`, item.visible, { type: "checkbox" })}
-            </div>
-        </article>`).join("") || '<p class="empty-state">Навыков пока нет.</p>'}</div>`;
+            </div></div></details>`).join("") || '<p class="empty-state">Навыков пока нет.</p>'}</div>`;
 }
 
 function renderLinks() {
     return `${sectionHeading("Кнопки и ссылки", "Первая видимая ссылка используется как главная контактная кнопка. Остальные выводятся рядом как дополнительные.", "кнопку")}
-        <div class="collection-list">${content.links.map((link, index) => `<article class="content-card item-card">
-            <div class="item-card-heading"><div><span class="item-kicker">${index === 0 ? "Главная кнопка" : `Кнопка ${index + 1}`}</span><h3>${escapeHtml(link.label?.ru || link.label?.en || "Без подписи")}</h3></div>${moveButtons("links", index, index, content.links.length)}</div>
-            <div class="field-grid">
+        <div class="compact-list">${content.links.map((link, index) => `<details class="compact-row"><summary class="compact-summary"><span class="row-order">${index + 1}</span><span class="row-title"><strong>${escapeHtml(link.label?.ru || link.label?.en || "Без подписи")}</strong><small>${escapeHtml(link.href || "Ссылка не задана")}</small></span>${moveButtons("links", index, index, content.links.length)}</summary><div class="row-edit-fields"><div class="field-grid">
                 ${localizedFields(`links.${index}.label`, typeof link.label === "object" ? link.label : { ru: link.label || "", en: link.label || "" }, { ru: "Подпись", en: "Label" })}
                 ${field("Адрес", `links.${index}.href`, link.href || "", { wide: true, placeholder: "https://…" })}
                 ${field("URL иконки (необязательно)", `links.${index}.iconUrl`, link.iconUrl || "", { wide: true, placeholder: "assets/images/icon.svg или https://…" })}
                 ${field("Показывать на сайте", `links.${index}.visible`, link.visible, { type: "checkbox" })}
-            </div>
-        </article>`).join("") || '<p class="empty-state">Кнопок пока нет.</p>'}</div>`;
+            </div></div></details>`).join("") || '<p class="empty-state">Кнопок пока нет.</p>'}</div>`;
 }
 
 function renderSection() {
     document.querySelectorAll(".editor-tab").forEach(button => {
         button.classList.toggle("active", button.dataset.section === activeSection);
     });
-    const renderers = { texts: renderTexts, projects: renderProjects, companies: renderCompanies, skills: renderSkills, links: renderLinks };
-    editorContent.innerHTML = renderers[activeSection]();
+    const isContent = activeSection === "content";
+    document.querySelectorAll(".editor-tab").forEach(button => button.setAttribute("aria-selected", String(button.dataset.section === activeSection)));
+    editorContent.innerHTML = isContent
+        ? renderProjects()
+        : `<nav class="collection-tabs" aria-label="Разделы метаданных">${[["texts", "Информация"], ["companies", "Компании"], ["skills", "Навыки"], ["links", "Кнопки и ссылки"]].map(([key, label]) => `<button class="collection-tab${activeCollection === key ? " active" : ""}" type="button" data-collection="${key}">${label}</button>`).join("")}</nav>${({ texts: renderTexts, companies: renderCompanies, skills: renderSkills, links: renderLinks })[activeCollection]()}`;
 }
 
 function setPath(path, value) {
@@ -195,20 +205,20 @@ function setPath(path, value) {
 }
 
 function addItem() {
-    if (activeSection === "projects") {
+    if (activeSection === "content") {
         const tab = "motion";
         const order = sortedProjects(tab).length;
         content.projects.push({ id: `project-${Date.now()}`, tab, src: "", order, visible: true });
-    } else if (activeSection === "companies") {
+    } else if (activeSection === "meta" && activeCollection === "companies") {
         content.companies.push({ names: { ru: "", en: "" }, mark: "", color: "#5962a4", textColor: "#ffffff", iconUrl: "", visible: true });
-    } else if (activeSection === "skills") {
+    } else if (activeSection === "meta" && activeCollection === "skills") {
         content.skills.push({ name: "", names: { ru: "", en: "" }, color: "#858ce8", iconUrl: "", visible: true });
-    } else if (activeSection === "links") {
+    } else if (activeSection === "meta" && activeCollection === "links") {
         content.links.push({ label: { ru: "", en: "" }, href: "", iconUrl: "", visible: true });
     }
     markDirty();
     renderSection();
-    editorContent.querySelector(".item-card:last-of-type")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    editorContent.querySelector(".compact-row:last-of-type")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function removeItem(kind, key) {
@@ -270,15 +280,29 @@ async function loadContent() {
     reloadButton.disabled = true;
     showMessage(saveMessage, "Загружаю данные…");
     try {
+        const response = await fetch("../assets-manifest.json", { cache: "no-store" });
+        if (!response.ok) throw new Error("manifest unavailable");
+        mediaManifest = await response.json();
+    } catch {
+        mediaManifest = [];
+    }
+    try {
         const snapshot = await getDoc(documentRef);
         documentExists = snapshot.exists();
         content = normalizeContent(documentExists ? snapshot.data() : portfolioDefaults);
-        dirty = false;
+        reconcileMedia();
+        dirty = manifestChanged;
         renderSection();
-        showMessage(saveMessage, documentExists
+        showMessage(saveMessage, manifestChanged
+            ? "Каталог Git изменился: сохраните его, чтобы обновить список портфолио в Firestore."
+            : documentExists
             ? "Данные загружены. Все изменения будут опубликованы после сохранения."
             : "В базе ещё нет контента: показаны текущие данные портфолио. Первое сохранение создаст документ.");
     } catch (error) {
+        content = normalizeContent(portfolioDefaults);
+        reconcileMedia();
+        dirty = manifestChanged;
+        renderSection();
         const message = error.code === "permission-denied"
             ? "Нет доступа к Firestore. Проверьте, что UID администратора опубликован в правилах Firestore."
             : `Не удалось загрузить данные из Firestore (${error.code || "ошибка сети"}).`;
@@ -286,6 +310,29 @@ async function loadContent() {
     } finally {
         reloadButton.disabled = false;
     }
+}
+
+function reconcileMedia() {
+    manifestChanged = false;
+    if (!mediaManifest.length) {
+        manifestStatus = "Каталог Git недоступен — можно редактировать текущие проекты вручную.";
+        return;
+    }
+    const available = new Set(mediaManifest.map(item => item.src));
+    const before = content.projects.length;
+    content.projects = content.projects.filter(project => !project.src?.startsWith("assets/videos/") || !/\.(mp4|webm|mov|avi|mkv)$/i.test(project.src) || available.has(project.src));
+    const removed = before - content.projects.length;
+    const used = new Set(content.projects.map(project => project.src));
+    let added = 0;
+    for (const media of mediaManifest) {
+        if (used.has(media.src)) continue;
+        const id = `asset-${media.src.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+        content.projects.push({ id, src: media.src, tab: media.suggestedTab, order: sortedProjects(media.suggestedTab).length, visible: false });
+        used.add(media.src);
+        added++;
+    }
+    manifestChanged = Boolean(added || removed);
+    manifestStatus = `Git: ${mediaManifest.length} видео · добавлено ${added} · удалено ${removed}. Новые файлы скрыты до включения.`;
 }
 
 loginForm.addEventListener("submit", async event => {
@@ -321,6 +368,56 @@ document.querySelectorAll(".editor-tab").forEach(button => button.addEventListen
     renderSection();
 }));
 
+editorContent.addEventListener("click", event => {
+    const collectionTab = event.target.closest("[data-collection]");
+    if (collectionTab) {
+        activeCollection = collectionTab.dataset.collection;
+        renderSection();
+        return;
+    }
+    if (event.target.closest(".item-controls")) event.preventDefault();
+});
+
+editorContent.addEventListener("dragstart", event => {
+    const row = event.target.closest(".project-row");
+    if (!row) return;
+    draggedProjectId = row.dataset.projectId;
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", draggedProjectId);
+    row.classList.add("is-dragging");
+});
+editorContent.addEventListener("dragover", event => {
+    const row = event.target.closest(".project-row");
+    if (!row || row.dataset.projectId === draggedProjectId) return;
+    event.preventDefault();
+    row.classList.add("drop-target");
+});
+editorContent.addEventListener("dragleave", event => event.target.closest(".project-row")?.classList.remove("drop-target"));
+editorContent.addEventListener("drop", event => {
+    const targetRow = event.target.closest(".project-row");
+    if (!targetRow || !draggedProjectId) return;
+    event.preventDefault();
+    const dragged = content.projects.find(item => item.id === draggedProjectId);
+    const target = content.projects.find(item => item.id === targetRow.dataset.projectId);
+    if (!dragged || !target) return;
+    const previousTab = dragged.tab;
+    const group = sortedProjects(target.tab);
+    const oldIndex = group.indexOf(dragged);
+    if (oldIndex >= 0) group.splice(oldIndex, 1);
+    const targetIndex = group.indexOf(target);
+    dragged.tab = target.tab;
+    group.splice(targetIndex, 0, dragged);
+    group.forEach((item, order) => { item.order = order; });
+    if (previousTab !== target.tab) sortedProjects(previousTab).forEach((item, order) => { item.order = order; });
+    draggedProjectId = "";
+    markDirty();
+    renderSection();
+});
+editorContent.addEventListener("dragend", () => {
+    draggedProjectId = "";
+    editorContent.querySelectorAll(".is-dragging, .drop-target").forEach(row => row.classList.remove("is-dragging", "drop-target"));
+});
+
 editorContent.addEventListener("input", event => {
     const control = event.target.closest("[data-path]");
     if (!control || control.type === "checkbox") return;
@@ -329,6 +426,20 @@ editorContent.addEventListener("input", event => {
 });
 
 editorContent.addEventListener("change", event => {
+    const orderInput = event.target.closest("[data-project-order]");
+    if (orderInput) {
+        const project = content.projects.find(item => item.id === orderInput.dataset.projectOrder);
+        if (!project) return;
+        const group = sortedProjects(project.tab);
+        const current = group.indexOf(project);
+        const target = Math.max(0, Math.min(group.length - 1, Number(orderInput.value) - 1));
+        group.splice(current, 1);
+        group.splice(target, 0, project);
+        group.forEach((item, order) => { item.order = order; });
+        markDirty();
+        renderSection();
+        return;
+    }
     const control = event.target.closest("[data-path]");
     if (!control) return;
     setPath(control.dataset.path, control.type === "checkbox" ? control.checked : control.value);

@@ -37,6 +37,8 @@ jobs:
               raise SystemExit("Could not find the footer version marker in index.html")
           index.write_text(html, encoding="utf-8")
           PY
+      - name: Index repository media
+        run: node scripts/generate-assets-manifest.mjs
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
