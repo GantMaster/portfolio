@@ -26,7 +26,6 @@ const textFields = [
 
 let content = normalizeContent(portfolioDefaults);
 let activeSection = "meta";
-let activeCollection = "texts";
 let documentExists = false;
 let dirty = false;
 let mediaManifest = [];
@@ -85,19 +84,19 @@ function field(label, path, value, options = {}) {
     return `<label class="${classes}"><span>${escapeHtml(label)}</span><input type="${type}" data-path="${safePath}" value="${escapeHtml(value ?? "")}" placeholder="${escapeHtml(placeholder)}"></label>`;
 }
 
-function localizedFields(path, value, labels) {
+function localizedFields(path, value, labels, wide = true) {
     return languages.map(lang => field(`${labels[lang]} · ${lang.toUpperCase()}`, `${path}.${lang}`, value?.[lang] || "", {
         type: "text",
-        wide: true,
+        wide,
     })).join("");
 }
 
-function sectionHeading(title, description, addLabel = "") {
-    return `<div class="section-heading"><div><h2>${title}</h2><p>${description}</p></div>${addLabel ? '<button class="secondary-button" type="button" data-action="add">+ ' + addLabel + "</button>" : ""}</div>`;
+function sectionHeading(title, description, addLabel = "", kind = "") {
+    return `<div class="section-heading"><div><h2>${title}</h2><p>${description}</p></div>${addLabel ? `<button class="secondary-button" type="button" data-action="add" data-kind="${kind}">+ ${addLabel}</button>` : ""}</div>`;
 }
 
 function renderTexts() {
-    return `${sectionHeading("Тексты и информация", "Заполните русский и английский варианты — переключатель языка на сайте использует их автоматически.")}
+    return `<section class="meta-section">${sectionHeading("Тексты и информация", "Заполните русский и английский варианты — переключатель языка на сайте использует их автоматически.")}
         <div class="language-columns">${languages.map(lang => `
             <section class="content-card language-card">
                 <h3>${lang === "ru" ? "Русский" : "English"}</h3>
@@ -105,7 +104,7 @@ function renderTexts() {
                     type: key === "description" ? "textarea" : "text",
                     wide: key === "description",
                 })).join("")}</div>
-            </section>`).join("")}</div>`;
+            </section>`).join("")}</div></section>`;
 }
 
 function moveButtons(kind, key, position, length, removable = true) {
@@ -134,14 +133,13 @@ function renderProject(project, tab, position, length) {
         ? `<video src="${escapeHtml(previewSrc)}" muted loop playsinline preload="none"></video>`
         : `<img src="${escapeHtml(previewSrc)}" alt="" loading="lazy">`;
     return `<article class="compact-row project-row${project.visible === false ? " is-hidden" : ""}" data-project-id="${escapeHtml(key)}" draggable="true">
-        <span class="drag-grip" aria-hidden="true">⠿</span><span class="project-thumb">${preview}</span>
-        <span class="row-order">${position + 1}</span>
-        <div class="row-title"><strong>${escapeHtml(fileName || "Новый проект")}</strong><small>${escapeHtml(src || "Путь к файлу не задан")}</small></div>
-        <label class="sr-only" for="project-order-${escapeHtml(key)}">Порядок</label><input class="order-input" id="project-order-${escapeHtml(key)}" type="number" min="1" value="${position + 1}" data-project-order="${escapeHtml(key)}">
-        <label class="sr-only" for="project-tab-${escapeHtml(key)}">Вкладка</label><select class="row-select" id="project-tab-${escapeHtml(key)}" data-path="projects.${index}.tab"><option value="motion" ${tab === "motion" ? "selected" : ""}>Креативы</option><option value="modeling" ${tab === "modeling" ? "selected" : ""}>Моделинг</option></select>
-        <label class="row-visible" title="Показывать на сайте"><input type="checkbox" data-path="projects.${index}.visible" ${project.visible !== false ? "checked" : ""}><span>Сайт</span></label>
+        <span class="drag-grip" aria-label="Перетащить">⠿</span><span class="project-thumb">${preview}</span>
+        <div class="tile-title"><span class="row-order">${position + 1}</span><div class="row-title"><strong>${escapeHtml(fileName || "Новый проект")}</strong><small>${escapeHtml(src || "Путь к файлу не задан")}</small></div></div>
+        <div class="tile-settings"><label class="tile-order">№ <input class="order-input" aria-label="Порядок" id="project-order-${escapeHtml(key)}" type="number" min="1" value="${position + 1}" data-project-order="${escapeHtml(key)}"></label>
+        <label class="sr-only" for="project-tab-${escapeHtml(key)}">Вкладка</label><select class="row-select" id="project-tab-${escapeHtml(key)}" data-path="projects.${index}.tab"><option value="motion" ${tab === "motion" ? "selected" : ""}>Креативы</option><option value="modeling" ${tab === "modeling" ? "selected" : ""}>Моделинг</option></select></div>
+        <div class="tile-actions"><label class="row-visible" title="Показывать на сайте"><input type="checkbox" data-path="projects.${index}.visible" ${project.visible !== false ? "checked" : ""}><span>На сайте</span></label>
         ${moveButtons("projects", key, position, length, !local)}
-        <details class="row-edit"><summary>Изменить</summary><div class="row-edit-fields">${field("Путь или URL", `projects.${index}.src`, src, { wide: true, placeholder: "assets/videos/example.mp4 или https://…" })}</div></details>
+        <details class="row-edit"><summary>Путь</summary><div class="row-edit-fields">${field("Файл или URL", `projects.${index}.src`, src, { wide: true, placeholder: "assets/videos/example.mp4 или https://…" })}</div></details></div>
     </article>`;
 }
 
@@ -151,40 +149,40 @@ function renderProjects() {
         <p class="section-hint">${escapeHtml(manifestStatus || "Каталог файлов появится после сборки сайта.")} · <code>assets/videos/</code></p>
         ${groups.map(([tab, title]) => {
             const projects = sortedProjects(tab);
-            return `<section class="collection-group"><h3>${title}<span>${projects.length}</span></h3><div class="compact-list" data-project-list="${tab}">${projects.length ? projects.map((project, index) => renderProject(project, tab, index, projects.length)).join("") : '<p class="empty-state">В этой вкладке пока нет проектов.</p>'}</div></section>`;
+            return `<section class="collection-group"><h3>${title}<span>${projects.length}</span></h3><div class="compact-list project-grid" data-project-list="${tab}">${projects.length ? projects.map((project, index) => renderProject(project, tab, index, projects.length)).join("") : '<p class="empty-state">В этой вкладке пока нет проектов.</p>'}</div></section>`;
         }).join("")}`;
 }
 
 function renderCompanies() {
-    return `${sectionHeading("Компании", "Управляйте названиями, порядком, цветами и собственными иконками.", "компанию")}
-        <div class="compact-list">${content.companies.map((item, index) => `<details class="compact-row"><summary class="compact-summary"><span class="row-order">${index + 1}</span><span class="row-title"><strong>${escapeHtml(item.names?.ru || item.names?.en || "Без названия")}</strong><small>${escapeHtml(item.mark || "Компания")}</small></span>${moveButtons("companies", index, index, content.companies.length)}</summary><div class="row-edit-fields"><div class="field-grid">
-                ${localizedFields(`companies.${index}.names`, item.names || { ru: item.name || "", en: item.name || "" }, { ru: "Название", en: "Name" })}
+    return `<section class="meta-section">${sectionHeading("Компании", "Управляйте названиями, порядком, цветами и собственными иконками.", "компанию", "companies")}
+        <div class="compact-list">${content.companies.map((item, index) => `<details class="compact-row" id="meta-companies-${index}"><summary class="compact-summary"><span class="row-order">${index + 1}</span><span class="row-title"><strong>${escapeHtml(item.names?.ru || item.names?.en || "Без названия")}</strong><small>${escapeHtml(item.mark || "Компания")}</small></span>${moveButtons("companies", index, index, content.companies.length)}</summary><div class="row-edit-fields"><div class="field-grid">
+                ${localizedFields(`companies.${index}.names`, item.names || { ru: item.name || "", en: item.name || "" }, { ru: "Название", en: "Name" }, false)}
                 ${field("Короткая метка", `companies.${index}.mark`, item.mark || "", { placeholder: "Например, CG" })}
                 ${field("Цвет фона", `companies.${index}.color`, item.color || "#5962a4", { type: "color" })}
                 ${field("Цвет метки", `companies.${index}.textColor`, item.textColor || "#ffffff", { type: "color" })}
-                ${field("URL иконки (необязательно)", `companies.${index}.iconUrl`, item.iconUrl || "", { wide: true, placeholder: "assets/images/company.png или https://…" })}
+                ${field("URL иконки (необязательно)", `companies.${index}.iconUrl`, item.iconUrl || "", { placeholder: "assets/images/company.png или https://…" })}
                 ${field("Показывать на сайте", `companies.${index}.visible`, item.visible, { type: "checkbox" })}
-            </div></div></details>`).join("") || '<p class="empty-state">Компаний пока нет.</p>'}</div>`;
+            </div></div></details>`).join("") || '<p class="empty-state">Компаний пока нет.</p>'}</div></section>`;
 }
 
 function renderSkills() {
-    return `${sectionHeading("Навыки", "Можно менять названия для обоих языков, порядок, цвет и иконку.", "навык")}
-        <div class="compact-list">${content.skills.map((item, index) => `<details class="compact-row"><summary class="compact-summary"><span class="row-order">${index + 1}</span><span class="row-title"><strong>${escapeHtml(item.names?.ru || item.names?.en || item.name || "Без названия")}</strong><small>Навык</small></span>${moveButtons("skills", index, index, content.skills.length)}</summary><div class="row-edit-fields"><div class="field-grid">
-                ${localizedFields(`skills.${index}.names`, item.names || { ru: item.name || "", en: item.name || "" }, { ru: "Название", en: "Name" })}
+    return `<section class="meta-section">${sectionHeading("Навыки", "Можно менять названия для обоих языков, порядок, цвет и иконку.", "навык", "skills")}
+        <div class="compact-list">${content.skills.map((item, index) => `<details class="compact-row" id="meta-skills-${index}"><summary class="compact-summary"><span class="row-order">${index + 1}</span><span class="row-title"><strong>${escapeHtml(item.names?.ru || item.names?.en || item.name || "Без названия")}</strong><small>Навык</small></span>${moveButtons("skills", index, index, content.skills.length)}</summary><div class="row-edit-fields"><div class="field-grid">
+                ${localizedFields(`skills.${index}.names`, item.names || { ru: item.name || "", en: item.name || "" }, { ru: "Название", en: "Name" }, false)}
                 ${field("Цвет", `skills.${index}.color`, item.color || "#858ce8", { type: "color" })}
-                ${field("URL иконки (необязательно)", `skills.${index}.iconUrl`, item.iconUrl || "", { wide: true, placeholder: "assets/images/icon.png или https://…" })}
+                ${field("URL иконки (необязательно)", `skills.${index}.iconUrl`, item.iconUrl || "", { placeholder: "assets/images/icon.png или https://…" })}
                 ${field("Показывать на сайте", `skills.${index}.visible`, item.visible, { type: "checkbox" })}
-            </div></div></details>`).join("") || '<p class="empty-state">Навыков пока нет.</p>'}</div>`;
+            </div></div></details>`).join("") || '<p class="empty-state">Навыков пока нет.</p>'}</div></section>`;
 }
 
 function renderLinks() {
-    return `${sectionHeading("Кнопки и ссылки", "Первая видимая ссылка используется как главная контактная кнопка. Остальные выводятся рядом как дополнительные.", "кнопку")}
-        <div class="compact-list">${content.links.map((link, index) => `<details class="compact-row"><summary class="compact-summary"><span class="row-order">${index + 1}</span><span class="row-title"><strong>${escapeHtml(link.label?.ru || link.label?.en || "Без подписи")}</strong><small>${escapeHtml(link.href || "Ссылка не задана")}</small></span>${moveButtons("links", index, index, content.links.length)}</summary><div class="row-edit-fields"><div class="field-grid">
-                ${localizedFields(`links.${index}.label`, typeof link.label === "object" ? link.label : { ru: link.label || "", en: link.label || "" }, { ru: "Подпись", en: "Label" })}
-                ${field("Адрес", `links.${index}.href`, link.href || "", { wide: true, placeholder: "https://…" })}
-                ${field("URL иконки (необязательно)", `links.${index}.iconUrl`, link.iconUrl || "", { wide: true, placeholder: "assets/images/icon.svg или https://…" })}
+    return `<section class="meta-section">${sectionHeading("Кнопки и ссылки", "Первая видимая ссылка используется как главная контактная кнопка. Остальные выводятся рядом как дополнительные.", "кнопку", "links")}
+        <div class="compact-list">${content.links.map((link, index) => `<details class="compact-row" id="meta-links-${index}"><summary class="compact-summary"><span class="row-order">${index + 1}</span><span class="row-title"><strong>${escapeHtml(link.label?.ru || link.label?.en || "Без подписи")}</strong><small>${escapeHtml(link.href || "Ссылка не задана")}</small></span>${moveButtons("links", index, index, content.links.length)}</summary><div class="row-edit-fields"><div class="field-grid">
+                ${localizedFields(`links.${index}.label`, typeof link.label === "object" ? link.label : { ru: link.label || "", en: link.label || "" }, { ru: "Подпись", en: "Label" }, false)}
+                ${field("Адрес", `links.${index}.href`, link.href || "", { placeholder: "https://…" })}
+                ${field("URL иконки (необязательно)", `links.${index}.iconUrl`, link.iconUrl || "", { placeholder: "assets/images/icon.svg или https://…" })}
                 ${field("Показывать на сайте", `links.${index}.visible`, link.visible, { type: "checkbox" })}
-            </div></div></details>`).join("") || '<p class="empty-state">Кнопок пока нет.</p>'}</div>`;
+            </div></div></details>`).join("") || '<p class="empty-state">Кнопок пока нет.</p>'}</div></section>`;
 }
 
 function renderSection() {
@@ -195,7 +193,7 @@ function renderSection() {
     document.querySelectorAll(".editor-tab").forEach(button => button.setAttribute("aria-selected", String(button.dataset.section === activeSection)));
     editorContent.innerHTML = isContent
         ? renderProjects()
-        : `<nav class="collection-tabs" aria-label="Разделы метаданных">${[["texts", "Информация"], ["companies", "Компании"], ["skills", "Навыки"], ["links", "Кнопки и ссылки"]].map(([key, label]) => `<button class="collection-tab${activeCollection === key ? " active" : ""}" type="button" data-collection="${key}">${label}</button>`).join("")}</nav>${({ texts: renderTexts, companies: renderCompanies, skills: renderSkills, links: renderLinks })[activeCollection]()}`;
+        : `<div class="meta-page">${renderTexts()}${renderCompanies()}${renderSkills()}${renderLinks()}</div>`;
     activateVisibleVideoPreviews();
 }
 
@@ -229,21 +227,26 @@ function setPath(path, value) {
     target[parts.at(-1)] = value;
 }
 
-function addItem() {
-    if (activeSection === "content") {
+function addItem(kind = "") {
+    const collection = activeSection === "content" ? "projects" : kind;
+    if (collection === "projects") {
         const tab = "motion";
         const order = sortedProjects(tab).length;
         content.projects.push({ id: `project-${Date.now()}`, tab, src: "", order, visible: true });
-    } else if (activeSection === "meta" && activeCollection === "companies") {
+    } else if (collection === "companies") {
         content.companies.push({ names: { ru: "", en: "" }, mark: "", color: "#5962a4", textColor: "#ffffff", iconUrl: "", visible: true });
-    } else if (activeSection === "meta" && activeCollection === "skills") {
+    } else if (collection === "skills") {
         content.skills.push({ name: "", names: { ru: "", en: "" }, color: "#858ce8", iconUrl: "", visible: true });
-    } else if (activeSection === "meta" && activeCollection === "links") {
+    } else if (collection === "links") {
         content.links.push({ label: { ru: "", en: "" }, href: "", iconUrl: "", visible: true });
     }
     markDirty();
     renderSection();
-    editorContent.querySelector(".compact-row:last-of-type")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const item = collection === "projects"
+        ? editorContent.querySelector(`[data-project-id="${content.projects.at(-1)?.id}"]`)
+        : editorContent.querySelector(`#meta-${collection}-${content[collection].length - 1}`);
+    if (item instanceof HTMLDetailsElement) item.open = true;
+    item?.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function removeItem(kind, key) {
@@ -394,12 +397,6 @@ document.querySelectorAll(".editor-tab").forEach(button => button.addEventListen
 }));
 
 editorContent.addEventListener("click", event => {
-    const collectionTab = event.target.closest("[data-collection]");
-    if (collectionTab) {
-        activeCollection = collectionTab.dataset.collection;
-        renderSection();
-        return;
-    }
     if (event.target.closest(".item-controls")) event.preventDefault();
 });
 
@@ -475,7 +472,7 @@ editorContent.addEventListener("change", event => {
 editorContent.addEventListener("click", event => {
     const button = event.target.closest("[data-action]");
     if (!button) return;
-    if (button.dataset.action === "add") addItem();
+    if (button.dataset.action === "add") addItem(button.dataset.kind);
     if (button.dataset.action === "remove") removeItem(button.dataset.kind, button.dataset.key);
     if (button.dataset.action === "move") moveItem(button.dataset.kind, button.dataset.key, Number(button.dataset.direction));
 });
