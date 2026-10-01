@@ -6,10 +6,9 @@ service cloud.firestore {
       allow get: if document == 'public';
       allow list: if false;
 
-      // Replace this value with the administrator's Firebase Auth UID.
-      // Do not loosen this rule to allow all signed-in users.
+      // Only the designated administrator may change portfolio content.
       allow create, update, delete: if request.auth != null
-        && request.auth.uid == 'REPLACE_WITH_ADMIN_UID';
+        && request.auth.uid == 'WlMbCDZI8aX3vNCe5YGLdpl2dy33';
     }
   }
 }
