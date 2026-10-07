@@ -30,7 +30,7 @@ Firestore хранит один документ `portfolio/public`: `texts.ru/e
 
 ## Деплой и безопасность
 
-Workflow `.github/workflows/firebase-hosting.yml` публикует live Hosting и Firestore Rules при push в `feature/portfolio-refresh`; `main` сейчас не деплоится. Workflow генерирует manifest и ставит версию сайта по номеру запуска CI. Для GitHub Actions нужен secret `FIREBASE_SERVICE_ACCOUNT` с JSON ключом сервисного аккаунта. Не коммитить его. Firebase Web config в `firebase-config.js` публичен по назначению; защиту обеспечивают Authentication и Firestore Rules.
+Workflow `.github/workflows/firebase-hosting.yml` публикует live Hosting и Firestore Rules при push в `feature/portfolio-refresh`; `main` сейчас не деплоится. Workflow генерирует manifest и обновляет версию сайта при каждом успешном деплое. Номер отображается в фиксированном индикаторе в левом нижнем углу публичного сайта — после публикации можно сверить, что открыта свежая версия. Для GitHub Actions нужен secret `FIREBASE_SERVICE_ACCOUNT` с JSON ключом сервисного аккаунта. Не коммитить его. Firebase Web config в `firebase-config.js` публичен по назначению; защиту обеспечивают Authentication и Firestore Rules.
 
 Настройка Firebase описана в [FIREBASE_SETUP.md](FIREBASE_SETUP.md). Для следующего сайта использовать [шаблон движка портфолио](templates/portfolio-engine/README.md).
 
